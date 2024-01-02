@@ -1,0 +1,9 @@
+{
+  "tasks": {
+    "dev": "deno run --watch libs/server.ts",
+    "generate": "deno run --allow-read=. --allow-write=dist --allow-net libs/generate.ts"
+  },
+  "imports": {
+    "$std/": "https://deno.land/std@0.210.0/"
+  }
+}

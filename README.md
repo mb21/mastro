@@ -1,6 +1,6 @@
 # mastro
 
-**M**inimal, no-dependencies take on an [**Astro**](https://astro.build)-like web framework.
+A *m*inimal, no-dependencies take on an [*Astro*](https://astro.build)-like web framework.
 
 Not production-ready, this is currently an experiment. I just wanted to see what the simplest web framework I could think of would look like that still offered a nice developer experience.
 

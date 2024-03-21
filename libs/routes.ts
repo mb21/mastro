@@ -1,7 +1,5 @@
-import * as h from './html.ts'
-
-export const htmlResponse = (nodes: h.Node[], status = 200, headers?: HeadersInit): Response =>
-  new Response(h.render(nodes), {
+export const htmlResponse = (body: string, status = 200, headers?: HeadersInit): Response =>
+  new Response(body, {
     status,
     headers: {
       'Content-Type': 'text/html',

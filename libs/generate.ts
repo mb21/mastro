@@ -1,29 +1,42 @@
-import { dirname } from '$std/path/mod.ts';
+import { dirname } from '$std/path/mod.ts'
 import { walk } from '$std/fs/walk.ts'
 import { config } from '../config.ts'
+import { filterIterable, mapIterable } from './iterable.ts'
 
 export interface StaticPath {
   params: Record<string, string>;
 }
 
-const generateAll = async () => {
+export const routeHandlers = async () => {
+  const handlers = []
   for await (const file of walk('routes')) {
     if (file.isFile && !file.isSymlink && file.name.endsWith('.ts')) {
-      const { GET, getStaticPaths } = await import(`../${file.path}`)
-      if (typeof GET === 'function') {
-
-        const paths = typeof getStaticPaths === 'function'
-          ? replaceParams(file.path, await getStaticPaths())
-          : [ file.path ]
-
-        paths.forEach(path =>
-          generatePage(path, GET)
-        )
-      } else {
-        console.warn(`${file.path} should export a function named GET`)
-      }
+      handlers.push({
+        module: await import(`../${file.path}`),
+        path: file.path,
+      })
     }
   }
+  return handlers
+}
+
+
+const generateAll = async () => {
+  (await routeHandlers()).forEach(async ({ module, path }) => {
+    const { GET, getStaticPaths } = module
+    if (typeof GET === 'function') {
+
+      const paths = typeof getStaticPaths === 'function'
+        ? replaceParams(path, await getStaticPaths())
+        : [ path ]
+
+      paths.forEach(path =>
+        generatePage(path, GET)
+      )
+    } else {
+      console.warn(`${path} should export a function named GET`)
+    }
+  })
 }
 
 generateAll()
@@ -38,8 +51,10 @@ const generatePage = async (path: string, GET: (req: Request) => Promise<Respons
   Deno.writeTextFile(fileName, htmlStr)
 }
 
+export const paramRegex = /\[([^\]]+)]/g
+
 const replaceParams = (path: string, staticPaths: StaticPath[]): string[] => {
-  const params = path.match(/\[([^\]]+)]/g) || []
+  const params = path.match(paramRegex) || []
   return staticPaths.map(p =>
     params.reduce((acc, paramWithBrackets) => {
       const param = paramWithBrackets.slice(1, -1)

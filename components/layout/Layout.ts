@@ -15,7 +15,16 @@ export const Layout = (props: Props) =>
       ),
       h.body(
         Menu(),
-        h.main(...props.children),
+        h.main(h.attr({ class: cls.main }),
+          ...props.children
+        ),
       ),
     )
   ]
+
+// or alternatively: styleFile('Layout.css')
+const cls = style(`
+.main {
+  margin: 0 auto;
+}
+`)

@@ -394,16 +394,51 @@ export const GET = async (req, params) => {
 Test it on your laptop. Congratulations, you have a working blog!
 
 
-## SSG
+## Static Site Generation (SSG)
 
-If you want to upload your website somewhere, a great way is to pre-generate all your html files. This is known as static site generation. But mastro won't magically guess what urls we want to pre-generate. To let it know, add the following at the bottom of `pages/news/[slug].server.jsx`:
+You now have a perfectly good web server running on your laptop, returning dynamic HTML on each request from your browser. But if you want to take this website live and have it running 24/7, you would need to have a server computer running that server program somehwere 24/7 (confusingly, both the computer itself and the program we run on it are both called "server"). This is possible, but often unnecessary.
 
-```js
-export const getStaticPaths = async () => {
-  const posts = await readMdFiles('data/posts/*.md')
-  return posts.map(post => ({ params: { slug: post.slug } }))
-}
+Instead, you can generate all your html files ahead of time. This is known as static site generation. That way, you don't need to have a server continuously running to execute your code when a request comes in – which means there is no server to update and secure from being hacked. Instead, you just need somebody to serve the html files you generated ahead of time. There are several services that do that for free, and they even place your files in several data centers around the world, so that your user's request will go to the geographically closest one and therefore will load much faster. Such a service is known as a CDN: a content delivery network. Services like GitHub Pages, Netlify or Vercel make it easy to use a CDN.
+
+To pre-generate all your html files, run `bun build`. It will tell you that it generated the `out/index.html` page, but that `pages/news/[slug].server.jsx` is missing a `staticPaths` field. That's because mastro won't magically guess all the blog post urls that we want to generate.
+
+To let it know, we import and use the `htmlRoute` function, which takes two arguments:
+
+1. a configuration object (with the paths to pre-generate), and
+2. the function which we already had previously.
+
+Change `pages/news/[slug].server.jsx` to:
+
+```jsx
+import { htmlRoute, readMdFile, readMdFiles } from 'mastro'
+import { Layout } from '../components/Layout.jsx'
+
+export const GET = htmlRoute(
+  {
+    staticPaths:  await readMdFiles('data/posts/*.md').then(post => `/news/${post.slug}`)
+  },
+  async (req, params) => {
+    const post = await readMdFile('data/posts/' + params.slug + '.md')
+    const { title } = post.data
+    return (
+      <Layout title={title}>
+        <h1>{title}</h1>
+        {post.body}
+      </Layout>
+    )
+  }
+)
 ```
+
+Run `bun build` again and have a look at the generated files in the `out/` directory. These are ready to be deployed to a production server.
+
+
+## Deploy your static site
+
+1. Create GitHub repo
+2. Configure it to [publish your site](https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site#creating-a-custom-github-actions-workflow-to-publish-your-site)
+3. Push changes and see them deployed
+
 
 
 
@@ -487,18 +522,6 @@ export const GET = (req) => {
 
 If you place a `.server.js` or `.server.jsx` file in the `pages/` folder, and export a function like `GET` from it, then the mastro server will call that function when the server receives a HTTP GET request from the browser – which is what happens behind the scenes when you visit `http://localhost:3000/peter` with your browser – try it!
 
-
-## Static Site Generation (SSG)
-
-We now have a perfectly good web server running on our laptop, returning dynamic HTML. But if we would want to take this website live and have it running 24/7, we would need to have a server computer running that server program somehwere 24/7 (confusingly, both the computer itself and the program we run on it are both called "server"). This is possible, but often an unnecessary complication. For most websites (e.g. a blog), all its URLs are known when we publish the website. With that information, we can generate all pages in advance, and then upload only the generated static files to a free host (like GitHub Pages, Netlify or Vercel). Let's add the following function to our `pages/[name].jsx` file:
-
-```ts
-export const getStaticPaths = () => {
-  return ['alice', 'bob', eve']
-}
-```
-
-Running `deno run generate`, now generates three files into `dist/`: `alice.html`, `bob.html` and `eve.html`.
 
 
 <!--

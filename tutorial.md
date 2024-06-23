@@ -400,11 +400,11 @@ You now have a perfectly good web server running on your laptop, returning dynam
 
 Instead, you can generate all your html files ahead of time. This is known as static site generation. That way, you don't need to have a server continuously running to execute your code when a request comes in – which means there is no server to update and secure from being hacked. Instead, you just need somebody to serve the html files you generated ahead of time. There are several services that do that for free, and they even place your files in several data centers around the world, so that your user's request will go to the geographically closest one and therefore will load much faster. Such a service is known as a CDN: a content delivery network. Services like GitHub Pages, Netlify or Vercel make it easy to use a CDN.
 
-To pre-generate all your html files, run `bun build`. It will tell you that it generated the `out/index.html` page, but that `pages/news/[slug].server.jsx` is missing a `staticPaths` field. That's because mastro won't magically guess all the blog post urls that we want to generate.
+To pre-generate all your html files, run `bun build`. It will tell you that it generated the `out/index.html` page, but that `pages/news/[slug].server.jsx` is missing a `staticParams` field. That's because mastro can't magically guess all the blog post urls that we want to generate.
 
 To let it know, we import and use the `htmlRoute` function, which takes two arguments:
 
-1. a configuration object (with the paths to pre-generate), and
+1. a configuration object (with the slugs to put into the paths to pre-generate), and
 2. the function which we already had previously.
 
 Change `pages/news/[slug].server.jsx` to:
@@ -415,7 +415,7 @@ import { Layout } from '../components/Layout.jsx'
 
 export const GET = htmlRoute(
   {
-    staticPaths:  await readMdFiles('data/posts/*.md').then(post => `/news/${post.slug}`)
+    staticParams:  await readMdFiles('data/posts/*.md').then(post => ({ slug: post.slug }))
   },
   async (req, params) => {
     const post = await readMdFile('data/posts/' + params.slug + '.md')
@@ -430,7 +430,7 @@ export const GET = htmlRoute(
 )
 ```
 
-Run `bun build` again and have a look at the generated files in the `out/` directory. These are ready to be deployed to a production server.
+Run `bun build` again and have a look at the generated files in the `out/` directory. These are ready to be uploaded to a CDN.
 
 
 ## Deploy your static site
@@ -440,7 +440,7 @@ Run `bun build` again and have a look at the generated files in the `out/` direc
 3. Push changes and see them deployed
 
 
-
+## Images
 
 
 

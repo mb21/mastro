@@ -6,6 +6,7 @@ Directory structure:
 - pages/      // files to be served verbatim and
               // functions that take a `Request` and return a `Response`
               // should pages/ be renamed to public/ ?
+- scripts/    // e.g. the file `scripts/images.ts` can be run with `bun run mastro:run:images`
 ```
 
 This tutorial teaches you the basics of HTML, CSS and JavaScript – the core web technologies. We use the Mastro framework – a minimal server and static site generator that follows the philosophy of KISS (keep it simple stupid): no bundler, no magic, nothing auto-injected into your page, leveraging native browser functionality instead of reinventing the wheel with JavaScript – all while still providing a modern developer experience.
@@ -442,7 +443,23 @@ Run `bun build` again and have a look at the generated files in the `out/` direc
 
 ## Images
 
+Now that you have your basic blog up and running on a live website, let's add some images.
 
+Put the original image file, with as high resolution as possible, in `data/posts/2024-01-31-second-post-image-1.jpg`. Then add the following script to `scripts/images.js`, which will convert all your blog images to compressed, lower-resolution versions, so that your website loads quickly:
+
+```js
+import { transformImgFiles } from 'mastro'
+
+await transformImgFiles('data/posts/*', 'pages/posts/*', { width: 1000 })
+```
+
+This will transform and resize all image files from the `posts/` folder to be 1000px wide, and write the output files to `pages/posts/`.
+
+To make sure this also happens when you publish your static site, change the `build` script in `package.json` to:
+
+    bun run mastro:run:images && bun run build
+
+during development: should we watch the folder? run it on startup?
 
 
 ## Dynamic interactivity with JavaScript in the browser

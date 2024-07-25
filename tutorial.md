@@ -9,7 +9,7 @@ Directory structure:
 - scripts/    // e.g. the file `scripts/images.ts` can be run with `bun run mastro:run:images`
 ```
 
-This tutorial teaches you the basics of HTML, CSS and JavaScript – the core web technologies. We use the Mastro framework – a minimal server and static site generator that follows the philosophy of KISS (keep it simple stupid): no bundler, no magic, nothing auto-injected into your page, leveraging native browser functionality instead of reinventing the wheel with JavaScript – all while still providing a modern developer experience.
+This tutorial teaches you the basics of HTML, CSS and JavaScript – the core web technologies. We use the Mastro framework – a minimal server and static site generator that follows the philosophy of KISS (keep it simple stupid): no bundler in dev mode and minimal bundler for production, no magic, nothing auto-injected into your page, leveraging native browser functionality instead of reinventing the wheel with JavaScript – all while still providing a modern developer experience.
 
 ## Content in HTML
 
@@ -459,7 +459,37 @@ To make sure this also happens when you publish your static site, change the `bu
 
     bun run mastro:run:images && bun run build
 
-during development: should we watch the folder? run it on startup?
+TODO:
+- during development: should we watch the folder? run it on startup?
+- alternatively: should the interface be a [transform](https://www.11ty.dev/docs/transforms/) instead of a script? then we could run it also [on-request in dev mode](https://www.11ty.dev/docs/plugins/image/#optimize-images-on-request).
+
+
+
+Design space:
+- where to place original image: `pages/myImage.server.jpg` or `data/myImage.jpg`
+- url of transformed image: `myImage.width=300.webp`
+- how `<img` HTML is created:
+  - by post-processing generated HTML: e.g. transforming all images or only with certain class
+  - by calling a `<Image` component 
+- which images are transformed:
+  - eagerly (prerender): those matched in the source folder. but then how do you know the transform options? you need to have the user run a script.
+  - lazily (on request): those referenced from the HTML: then for ssr, we would need a precompile script that finds all places in the source that uses the image, even if behind if condition. so you need to analyze source code.
+
+but either way, we're only talking about build-time images. you cannot have end-user input a string to an image in a CDN and then resize that on-demand. that would be out-of-scope.
+
+config that specifies a declarative mapping which we can use to pre-render all images in folder, or lookup on-request in dev mode:
+  `transformImgs("data/posts/**/*.jpg", { blogportrait: {width: 400, srcset: ["2x"] } })`
+input html: `<img class="blogportrait" src="myImage.jpg">`
+output html: `<img class="blogportrait" width="150" src="myImage.hash.webp" ...`
+
+
+## How to use third-party code
+
+1. Link to external script. But better self-host, because browsers don't share cache between different origins anyway.
+2. npm install: either serve every file as is (but for some packages have hundreds of files), or bundle each package as one file (and tree-shake it? but if we need to analyze which functions are called from our code, we can also tree-shake our own code. perhaps replace it with whitespace so that line-numbers stay the same?) but seems as soon as we have [module declarations](https://github.com/tc39/proposal-module-declarations), we should bundle to that anyway.
+
+-> mastro just has no bundler/transpiler in dev mode (except typescript). thus no semantic changes, only performance optimizations.
+
 
 
 ## Dynamic interactivity with JavaScript in the browser
@@ -538,7 +568,6 @@ export const GET = (req) => {
 ```
 
 If you place a `.server.js` or `.server.jsx` file in the `pages/` folder, and export a function like `GET` from it, then the mastro server will call that function when the server receives a HTTP GET request from the browser – which is what happens behind the scenes when you visit `http://localhost:3000/peter` with your browser – try it!
-
 
 
 <!--

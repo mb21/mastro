@@ -9,7 +9,24 @@ Directory structure:
 - scripts/    // e.g. the file `scripts/images.ts` can be run with `bun run mastro:run:images`
 ```
 
-This tutorial teaches you the basics of HTML, CSS and JavaScript – the core web technologies. We use the Mastro framework – a minimal server and static site generator that follows the philosophy of KISS (keep it simple stupid): no bundler in dev mode and minimal bundler for production, no magic, nothing auto-injected into your page, leveraging native browser functionality instead of reinventing the wheel with JavaScript – all while still providing a modern developer experience.
+This tutorial teaches you the basics of HTML, CSS and JavaScript – the core web technologies. We use the Mastro framework – a minimal server and static site generator that follows the philosophy of KISS (keep it simple stupid):
+
+- no bundler in development mode (and minimal bundler for production)
+  - meaning changes during development are instant and you can debug in the browser
+
+- no magic, nothing auto-injected into your page
+
+- extremely fast page loads by leveraging native browser functionality instead of reinventing the wheel in JavaScript
+  - instead of the client-side navigation of SPAs that need to reinvent loading indicators, scroll position restoration, `<Link>` elements, etc., we are 100% committed to MPAs and leveraging the browser's built-in bfcache.
+
+- focus on MPA means we can leave a lot of code on the server that SPAs (and even MPAs with islands) need to send to the client
+  - when you navigate in a SPA, you need all the code for the next page downloaded to the browser (all you can choose is whether to pre-fetch that code already on the first page, or do it lazily only when you need it). Even MPAs with islands send the whole island's code to the client, and if the island is also server-rendered, you send most data twice (once as HTML and then again as JavaScript/JSON). In contrast, mastro's fine-grained client components only contain the JavaScript needed to modify the HTML that's already sent.
+
+- while other frameworks try to erase the boundary between client and server (RPC, server functions), mastro gives you full control by making it explicit which parts of your app run where and when
+  - progressive enhancement: you first write the server component, which determines what HTML is rendered on the server (and by extension what your useres will see while the client-side JavaScript is still loading, or if it fails to load). Only in a second step you write the client component, which is a separate file that is sent untransformed to the browser – just the way you wrote it.
+
+- all while still providing a modern developer experience similar to React or Solid.
+
 
 ## Content in HTML
 
@@ -475,7 +492,7 @@ Design space:
   - eagerly (prerender): those matched in the source folder. but then how do you know the transform options? you need to have the user run a script.
   - lazily (on request): those referenced from the HTML: then for ssr, we would need a precompile script that finds all places in the source that uses the image, even if behind if condition. so you need to analyze source code.
 
-but either way, we're only talking about build-time images. you cannot have end-user input a string to an image in a CDN and then resize that on-demand. that would be out-of-scope.
+but either way, we're only talking about build-time images. you cannot have end-user enter a url to an image in a CMS and then resize that image on-demand. that would be out-of-scope.
 
 config that specifies a declarative mapping which we can use to pre-render all images in folder, or lookup on-request in dev mode:
   `transformImgs("data/posts/**/*.jpg", { blogportrait: {width: 400, srcset: ["2x"] } })`
@@ -486,7 +503,7 @@ output html: `<img class="blogportrait" width="150" src="myImage.hash.webp" ...`
 ## How to use third-party code
 
 1. Link to external script. But better self-host, because browsers don't share cache between different origins anyway.
-2. npm install: either serve every file as is (but for some packages have hundreds of files), or bundle each package as one file (and tree-shake it? but if we need to analyze which functions are called from our code, we can also tree-shake our own code. perhaps replace it with whitespace so that line-numbers stay the same?) but seems as soon as we have [module declarations](https://github.com/tc39/proposal-module-declarations), we should bundle to that anyway.
+2. npm install: either serve every file as-is (but some packages have hundreds of files), or bundle each package as one file (and tree-shake it? but if we need to analyze which functions are called from our code, we can also tree-shake our own code. perhaps replace it with whitespace so that line-numbers stay the same?) but seems as soon as we have [module declarations](https://github.com/tc39/proposal-module-declarations), we should bundle to that anyway.
 
 -> mastro just has no bundler/transpiler in dev mode (except typescript). thus no semantic changes, only performance optimizations.
 

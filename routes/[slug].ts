@@ -1,6 +1,6 @@
 import { Layout } from "../components/layout/Layout.ts";
 import { StaticPath } from "../libs/generate.ts";
-import { h, renderHtmlDoc } from '../libs/html.ts'
+import { html, renderHtmlDoc } from '../libs/html.ts'
 import { htmlResponse } from "../libs/routes.ts";
 import { getPost, getPostSlugs } from '../models/posts.ts'
 
@@ -11,12 +11,12 @@ export const GET = async (req: Request): Promise<Response> => {
     renderHtmlDoc({
       body: Layout({
           title,
-          children: [
-            h('article')(
-              h('h2')(post.data.title),
-              h('p')(post.content)
-            )
-          ]
+          children: html`
+            <article>
+              <h2>${post.data.title}</h2>
+              <p>${post.content}</p>
+            </article>
+            `
         }),
        title,
        lang: 'en',

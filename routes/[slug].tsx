@@ -1,4 +1,4 @@
-import { Layout } from "../components/layout/Layout.ts";
+import { Layout } from "../components/layout/Layout.tsx";
 import { StaticPath } from "../libs/generate.ts";
 import { h, renderHtmlDoc } from '../libs/html.ts'
 import { htmlResponse } from "../libs/routes.ts";

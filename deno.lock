@@ -1,5 +1,16 @@
 {
   "version": "3",
+  "packages": {
+    "specifiers": {
+      "npm:@maverick-js/signals@6.0.0": "npm:@maverick-js/signals@6.0.0"
+    },
+    "npm": {
+      "@maverick-js/signals@6.0.0": {
+        "integrity": "sha512-aPAxQOjxcGaLpjMcfE0mRuMgnCVLfdPSGINYmKDjTbTfY37lZdz9CGnVDrkr+svNSADZbUVk7oPVjXA2+vtxYg==",
+        "dependencies": {}
+      }
+    }
+  },
   "remote": {
     "https://deno.land/std@0.210.0/assert/assert.ts": "e265ad50a9341f3b40e51dd4cb41ab253d976943ba78a977106950e52e0302ab",
     "https://deno.land/std@0.210.0/assert/assertion_error.ts": "26ed1863d905005f00785c89750c001c3522c5417e4f58f95044b8143cfc1593",
@@ -122,6 +133,12 @@
     "https://deno.land/std@0.210.0/yaml/schema/failsafe.ts": "d219ab5febc43f770917d8ec37735a4b1ad671149846cbdcade767832b42b92b",
     "https://deno.land/std@0.210.0/yaml/schema/json.ts": "5f41dd7c2f1ad545ef6238633ce9ee3d444dfc5a18101e1768bd5504bf90e5e5",
     "https://deno.land/std@0.210.0/yaml/schema/mod.ts": "4472e827bab5025e92bc2eb2eeefa70ecbefc64b2799b765c69af84822efef32",
-    "https://deno.land/std@0.210.0/yaml/type.ts": "65553da3da3c029b6589c6e4903f0afbea6768be8fca61580711457151f2b30f"
+    "https://deno.land/std@0.210.0/yaml/type.ts": "65553da3da3c029b6589c6e4903f0afbea6768be8fca61580711457151f2b30f",
+    "https://raw.githubusercontent.com/proposal-signals/signal-polyfill/refs/heads/main/src/index.ts": "a31cc9bcdf8d2fa53200d62697778f6cc416168ec275c73c703f0a23ed7ef3cc"
+  },
+  "workspace": {
+    "dependencies": [
+      "npm:@maverick-js/signals@6.0.0"
+    ]
   }
 }

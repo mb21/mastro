@@ -4,6 +4,7 @@
     "generate": "deno run --allow-read=. --allow-write=dist --allow-net libs/generate.ts"
   },
   "imports": {
-    "$std/": "https://deno.land/std@0.210.0/"
+    "$std/": "https://deno.land/std@0.210.0/",
+    "@maverick-js/signals": "npm:@maverick-js/signals@6.0.0"
   }
 }

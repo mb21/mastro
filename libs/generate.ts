@@ -6,7 +6,15 @@ export interface StaticPath {
   params: Record<string, string>;
 }
 
-const generateAll = async () => {
+const copyClientFiles = async () => {
+  for await (const file of walk('components')) {
+    if (file.isFile && !file.isSymlink && file.name.endsWith('client.ts')) {
+    }
+  }
+}
+// copyClientFiles()
+
+const generateAllPages = async () => {
   for await (const file of walk('routes')) {
     if (file.isFile && !file.isSymlink && file.name.endsWith('.ts')) {
       const { GET, getStaticPaths } = await import(`../${file.path}`)
@@ -25,8 +33,7 @@ const generateAll = async () => {
     }
   }
 }
-
-generateAll()
+generateAllPages()
 
 const generatePage = async (path: string, GET: (req: Request) => Promise<Response>) => {
   const req = new Request(filepathToUrl(path))

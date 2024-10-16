@@ -1,4 +1,5 @@
 import { Layout } from "../components/layout/Layout.ts";
+import { Counter } from "../components/Counter.server.ts";
 import { StaticPath } from "../libs/generate.ts";
 import { html, renderHtmlDoc } from '../libs/html.ts'
 import { htmlResponse } from "../libs/routes.ts";
@@ -15,6 +16,7 @@ export const GET = async (req: Request): Promise<Response> => {
             <article>
               <h2>${post.data.title}</h2>
               <p>${post.content}</p>
+              ${Counter()}
             </article>
             `
         }),

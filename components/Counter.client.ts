@@ -1,8 +1,8 @@
-import { root, signal, computed, effect } from '@maverick-js/signals'
+import { signal, computed } from '@maverick-js/signals'
 import { html } from "../libs/html.ts";
 
-export const CounterClient = (initialCount = 0) => {
-  const count = signal(initialCount)
+export const CounterClient = (props) => {
+  const count = signal(props.start || 0)
 
   const doubleCount = computed(() => count()*2)
 

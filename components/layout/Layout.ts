@@ -1,5 +1,5 @@
 import { type HtmlNode, html } from '../../libs/html.ts'
-import { importMap } from "../../libs/routes.ts";
+import { importMap, scripts } from "../../libs/routes.ts";
 import { Menu } from './Menu.ts'
 
 interface Props {
@@ -14,7 +14,7 @@ export const Layout = (props: Props) => html`
       <meta charset="UTF-8">
       <title>${props.title}</title>
       ${importMap()}
-      <script type="module" src="components/Counter.client.ts"></script>
+      ${scripts('components/*.client.ts')}
     </head>
     <body>
       ${Menu()}

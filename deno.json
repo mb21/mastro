@@ -1,7 +1,7 @@
 {
   "tasks": {
-    "dev": "deno run --watch --allow-read=. --allow-net libs/server.ts",
-    "generate": "deno run --allow-read=. --allow-write=dist --allow-net libs/generate.ts"
+    "dev": "deno run --watch --no-prompt --allow-read=. --allow-net libs/server.ts",
+    "generate": "deno run --no-prompt --allow-read=. --allow-write=dist --allow-net libs/generate.ts"
   },
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
@@ -10,6 +10,7 @@
     "@maverick-js/signals": "npm:@maverick-js/signals@6.0.0",
     "@std/front-matter": "jsr:@std/front-matter@^1.0.5",
     "@std/fs": "jsr:@std/fs@^1.0.4",
-    "@std/path": "jsr:@std/path@^1.0.6"
+    "@std/path": "jsr:@std/path@^1.0.6",
+    "ts-blank-space": "npm:ts-blank-space"
   }
 }

@@ -4,6 +4,7 @@ import { ReactiveElement } from '../libs/reactive.client.ts'
 window.customElements.define('my-counter', class extends ReactiveElement {
   count = signal(parseInt(this.getAttribute('start') || '0', 10))
   greater3 = computed(() => this.count() >= 3)
+  hideGreater3 = computed(() => this.count() >= 3 ? 'none' : '')
 
   dec () {
     this.count.set(c => c - 1)

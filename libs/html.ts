@@ -1,5 +1,5 @@
 // deno-lint-ignore ban-types
-export type HtmlNode = String | string | number | undefined | null | { type: 'marker'; marker: string; node: HtmlNode | HtmlNode[] }
+export type HtmlNode = String | string | number | undefined | null
 
 export const html = (strings: TemplateStringsArray, ...params: Array<HtmlNode | HtmlNode[]>) =>
   unsafeInnerHtml(String.raw({ raw: strings }, ...params.map(p =>

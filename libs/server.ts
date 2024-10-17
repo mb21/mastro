@@ -1,3 +1,5 @@
+import tsBlankSpace from 'ts-blank-space'
+
 Deno.serve(async req => {
   const url = new URL(req.url)
   const { pathname } = url
@@ -10,7 +12,7 @@ Deno.serve(async req => {
         && !pathname.endsWith('.server.ts')) {
       const filePath = pathname.slice(1)
       const text = await Deno.readTextFile(filePath)
-      return new Response(text, {
+      return new Response(tsBlankSpace(text), {
         headers: { 'Content-Type': 'text/javascript' },
       })
     } else {

@@ -1,6 +1,6 @@
 {
   "tasks": {
-    "dev": "deno run --watch libs/server.ts",
+    "dev": "deno run --watch --allow-read=. --allow-net libs/server.ts",
     "generate": "deno run --allow-read=. --allow-write=dist --allow-net libs/generate.ts"
   },
   "compilerOptions": {

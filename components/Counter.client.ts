@@ -1,21 +1,15 @@
-import { root, signal, computed, effect } from '@maverick-js/signals'
-import { html } from "../libs/html.ts";
+import { computed, signal } from '@maverick-js/signals'
+import { ReactiveElement } from '../libs/reactive.client.ts'
 
-export const CounterClient = (initialCount = 0) => {
-  const count = signal(initialCount)
+window.customElements.define('my-counter', class extends ReactiveElement {
+  count = signal(parseInt(this.getAttribute('start') || '0', 10))
+  greater3 = computed(() => this.count() >= 3)
 
-  const doubleCount = computed(() => count()*2)
+  dec () {
+    this.count.set(c => c - 1)
+  }
 
-  const double = computed(() =>
-    doubleCount() > 3
-      ? 'greater three'
-      : html`<span>${doubleCount()}</span>`)
-
-  const showText = () =>
-    count() > 10 ? 'display: none' : ''
-
-  const inc = () =>
-    count.set(count => count + 1)
-
-  return { count, double, doubleCount, showText, inc }
-}
+  inc () {
+    this.count.set(c => c + 1)
+  }
+})

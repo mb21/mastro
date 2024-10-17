@@ -1,5 +1,5 @@
-import { dirname } from '$std/path/mod.ts';
-import { walk } from '$std/fs/walk.ts'
+import { dirname } from '@std/path/';
+import { walk } from '@std/fs/'
 import { config } from '../config.ts'
 
 export interface StaticPath {

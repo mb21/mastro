@@ -1,14 +1,47 @@
 {
-  "version": "3",
-  "packages": {
-    "specifiers": {
-      "npm:@maverick-js/signals@6.0.0": "npm:@maverick-js/signals@6.0.0"
+  "version": "4",
+  "specifiers": {
+    "jsr:@std/collections@^1.0.5": "1.0.8",
+    "jsr:@std/front-matter@^1.0.5": "1.0.5",
+    "jsr:@std/fs@^1.0.4": "1.0.4",
+    "jsr:@std/path@^1.0.6": "1.0.6",
+    "jsr:@std/toml@^1.0.1": "1.0.1",
+    "jsr:@std/yaml@^1.0.5": "1.0.5",
+    "npm:@maverick-js/signals@6.0.0": "6.0.0"
+  },
+  "jsr": {
+    "@std/collections@1.0.8": {
+      "integrity": "de76692f9121838711b1d2fb5042619c074db26905a87b58cff56cfe1bd6d6d0"
     },
-    "npm": {
-      "@maverick-js/signals@6.0.0": {
-        "integrity": "sha512-aPAxQOjxcGaLpjMcfE0mRuMgnCVLfdPSGINYmKDjTbTfY37lZdz9CGnVDrkr+svNSADZbUVk7oPVjXA2+vtxYg==",
-        "dependencies": {}
-      }
+    "@std/front-matter@1.0.5": {
+      "integrity": "abddc64030a33eb5bc524b8c73e7c417cea09177aaeb4abf75a56b540c4b6e60",
+      "dependencies": [
+        "jsr:@std/toml",
+        "jsr:@std/yaml"
+      ]
+    },
+    "@std/fs@1.0.4": {
+      "integrity": "2907d32d8d1d9e540588fd5fe0ec21ee638134bd51df327ad4e443aaef07123c",
+      "dependencies": [
+        "jsr:@std/path"
+      ]
+    },
+    "@std/path@1.0.6": {
+      "integrity": "ab2c55f902b380cf28e0eec501b4906e4c1960d13f00e11cfbcd21de15f18fed"
+    },
+    "@std/toml@1.0.1": {
+      "integrity": "b55b407159930f338d384b1f8fd317c8e8a35e27ebb8946155f49e3a158d16c4",
+      "dependencies": [
+        "jsr:@std/collections"
+      ]
+    },
+    "@std/yaml@1.0.5": {
+      "integrity": "71ba3d334305ee2149391931508b2c293a8490f94a337eef3a09cade1a2a2742"
+    }
+  },
+  "npm": {
+    "@maverick-js/signals@6.0.0": {
+      "integrity": "sha512-aPAxQOjxcGaLpjMcfE0mRuMgnCVLfdPSGINYmKDjTbTfY37lZdz9CGnVDrkr+svNSADZbUVk7oPVjXA2+vtxYg=="
     }
   },
   "remote": {
@@ -138,6 +171,9 @@
   },
   "workspace": {
     "dependencies": [
+      "jsr:@std/front-matter@^1.0.5",
+      "jsr:@std/fs@^1.0.4",
+      "jsr:@std/path@^1.0.6",
       "npm:@maverick-js/signals@6.0.0"
     ]
   }

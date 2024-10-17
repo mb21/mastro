@@ -3,8 +3,13 @@
     "dev": "deno run --watch libs/server.ts",
     "generate": "deno run --allow-read=. --allow-write=dist --allow-net libs/generate.ts"
   },
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
+  },
   "imports": {
-    "$std/": "https://deno.land/std@0.210.0/",
-    "@maverick-js/signals": "npm:@maverick-js/signals@6.0.0"
+    "@maverick-js/signals": "npm:@maverick-js/signals@6.0.0",
+    "@std/front-matter": "jsr:@std/front-matter@^1.0.5",
+    "@std/fs": "jsr:@std/fs@^1.0.4",
+    "@std/path": "jsr:@std/path@^1.0.6"
   }
 }

@@ -1,4 +1,4 @@
-import { extract } from '$std/front_matter/any.ts'
+import { extractYaml } from '@std/front-matter'
 
 export interface Post {
   content: string;
@@ -8,7 +8,7 @@ export interface Post {
 
 export const getPost = async (slug: string): Promise<Post> => {
   const text = await Deno.readTextFile(`./data/posts/${slug}.md`)
-  const { attrs, body } = extract(text)
+  const { attrs, body } = extractYaml(text)
   return {
     content: body,
     data: attrs as Record<string, string>,

@@ -1,22 +1,5 @@
 import { root, effect } from "@maverick-js/signals"
 
-const eventNames = ['click', 'change', 'input', 'submit']
-
-/**
- * Parses string 'prop.subprop=value' => { prop, subprop, error }
- */
-const parseBind = (bind: string) => {
-  const parts = bind.split('=')
-  if (parts.length === 2) {
-    const [prop, subprop] = parts[0].trim().split('.')
-    return prop
-      ? { prop, subprop }
-      : { error: 'Found invalid data-bind value' }
-  } else {
-    return { prop: 'innerHTML' }
-  }
-}
-
 export class ReactiveElement extends HTMLElement {
   #dispose
 
@@ -67,5 +50,22 @@ export class ReactiveElement extends HTMLElement {
 
   disconnectedCallback () {
     this.#dispose?.()
+  }
+}
+
+const eventNames = ['click', 'change', 'input', 'submit']
+
+/**
+ * Parses string 'prop.subprop=value' => { prop, subprop, error }
+ */
+const parseBind = (bind: string) => {
+  const parts = bind.split('=')
+  if (parts.length === 2) {
+    const [prop, subprop] = parts[0].trim().split('.')
+    return prop
+      ? { prop, subprop }
+      : { error: 'Found invalid data-bind value' }
+  } else {
+    return { prop: 'innerHTML' }
   }
 }

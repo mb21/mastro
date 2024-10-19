@@ -1,9 +1,14 @@
 import { root, effect } from "@maverick-js/signals"
+import { renderNode } from "./html.ts";
 
 export class ReactiveElement extends HTMLElement {
   #dispose
 
   connectedCallback () {
+    if (typeof this.initialHtml === 'function' && !this.innerHTML.trim()) {
+      this.innerHTML = renderNode(this.initialHtml())
+    }
+
     root(dispose => {
       this.#dispose = dispose
       Object.getOwnPropertyNames(this).forEach(field => {
@@ -35,6 +40,7 @@ export class ReactiveElement extends HTMLElement {
         this.addEventListener(eventName, e => {
           const { dataset } = e.target || {}
           if (dataset['on' + eventName]) {
+            e.stopPropagation()
             const methodName = dataset['on' + eventName].split('#').pop()
             if (typeof this[methodName] === 'function') {
               const args = dataset.args?.split(',') || []

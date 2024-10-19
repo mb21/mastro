@@ -33,6 +33,7 @@ customElements.define('todo-list', class extends ReactiveElement {
           data-args=${i}
           >
         ${todo.title}
+        <button data-onclick="removeTodo" data-args=${i}>x</button>
       </li>
     `)
   )
@@ -57,4 +58,8 @@ customElements.define('todo-list', class extends ReactiveElement {
     }
   }
 
+  removeTodo (_e: Event, i: number) {
+    const todos = this.todos()
+    this.todos.set([...todos.slice(0, i), ...todos.slice(i + 1)])
+  }
 })

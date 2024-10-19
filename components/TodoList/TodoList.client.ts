@@ -4,9 +4,24 @@ import { html } from '../../libs/html.ts'
 
 type TodoItem = { title: string; done: boolean }
 
+const localSignal = <T>(initialVal: T, key: string) => {
+  try {
+    initialVal = JSON.parse(localStorage[key])
+  } catch (_e) {
+    // ignore
+  }
+  const s = signal(initialVal)
+  const local = () => s()
+  local.set = (newVal: T) => {
+    s.set(newVal)
+    localStorage[key] = JSON.stringify(newVal)
+  }
+  return local
+}
+
 customElements.define('todo-list', class extends ReactiveElement {
   newTitle = signal('')
-  todos = signal<TodoItem[]>([])
+  todos = localSignal<TodoItem[]>([], 'todos')
 
   renderedTodos = computed(() =>
     this.todos().map((todo, i) => html`
@@ -24,10 +39,9 @@ customElements.define('todo-list', class extends ReactiveElement {
 
   toggleTodo (e: Event, i: number) {
     const { checked } = e.target as HTMLInputElement
-    this.todos.set(todos => {
-      todos[i].done = checked
-      return [...todos]
-    })
+    const todos = [...this.todos()]
+    todos[i].done = checked
+    this.todos.set(todos)
   }
 
   updateNewTitle (e: Event) {
@@ -38,7 +52,7 @@ customElements.define('todo-list', class extends ReactiveElement {
   addTodo (e: SubmitEvent) {
     e.preventDefault()
     if (this.newTitle()) {
-      this.todos.set(todos => [{ title: this.newTitle(), done: false }, ...todos])
+      this.todos.set([{ title: this.newTitle(), done: false }, ...this.todos()])
       this.newTitle.set('')
     }
   }

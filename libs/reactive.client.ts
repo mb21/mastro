@@ -1,6 +1,6 @@
 import { root, effect } from "@maverick-js/signals"
 
-const eventNames = ['click', 'input', 'submit']
+const eventNames = ['click', 'change', 'input', 'submit']
 
 /**
  * Parses string 'prop.subprop=value' => { prop, subprop, error }
@@ -47,9 +47,19 @@ export class ReactiveElement extends HTMLElement {
       })
 
       eventNames.forEach(eventName =>
-        this.querySelectorAll(`[data-on${eventName}]`).forEach(el => {
-          const methodName = el.dataset['on' + eventName].split('#').pop()
-          el.addEventListener(eventName, e => this[methodName](e))
+        // to support events on elements that are added after custom element creation,
+        // we add a listener to the custom element for each common event name and let the event bubble up there
+        this.addEventListener(eventName, e => {
+          const { dataset } = e.target || {}
+          if (dataset['on' + eventName]) {
+            const methodName = dataset['on' + eventName].split('#').pop()
+            if (typeof this[methodName] === 'function') {
+              const args = dataset.args?.split(',') || []
+              this[methodName](e, ...args)
+            } else {
+              console.warn(`${this.nodeName.toLowerCase()}#${methodName} is not a function`)
+            }
+          }
         })
       )
     })

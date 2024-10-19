@@ -18,11 +18,11 @@ export const GET = async (): Promise<Response> => {
             <p><a href="${post.slug + '.html' }">${post.data.title}</a></p>
           `)}
 
-          <h2>Counter</h2>
-          ${Counter()}
-
           <h2>Todo list</h2>
           ${TodoList()}
+
+          <h2>Counter</h2>
+          ${Counter()}
           `
       }),
     )

@@ -36,7 +36,7 @@ export const renderHtmlDoc = (
     `)
 
 export const renderNode = (node: HtmlNode): string =>
-  typeof node === 'object' ? (node?.toString() || '') : ''
+  node?.toString() || ''
 
 
 const escapeForHtml = (st: string) =>

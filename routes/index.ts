@@ -21,7 +21,7 @@ export const GET = async (): Promise<Response> => {
           <h2>Todo list</h2>
           ${TodoList()}
 
-          <h2>Counter</h2>
+          <h2>Server-initialized Counter</h2>
           ${Counter()}
           `
       }),

@@ -1,6 +1,7 @@
 import { root, effect } from "@maverick-js/signals"
 import { renderNode } from "./html.ts";
 
+
 export class ReactiveElement extends HTMLElement {
   #dispose
 
@@ -11,28 +12,36 @@ export class ReactiveElement extends HTMLElement {
 
     root(dispose => {
       this.#dispose = dispose
-      Object.getOwnPropertyNames(this).forEach(field => {
-        if (typeof this[field] !== 'function') {
-          return console.warn(`${this.nodeName.toLowerCase()}#${field} is a public field but not a signal`)
-        }
-        this.querySelectorAll(`[data-bind$=${field}]`).forEach(el => {
-          const { error, prop, subprop } = parseBind(el.dataset.bind)
-          if (error) {
-            console.warn(error, el)
-          } else {
-            effect(() => {
-              const val = this[field]()
-              if (prop === 'class') {
-                el.classList[val ? 'add' : 'remove'](subprop)
-              } else if (subprop) {
-                el[prop][subprop] = val
+
+      const registerRenderingEffects = (rootEl: Element) => {
+        Object.getOwnPropertyNames(this).forEach(field => {
+          if (typeof this[field] === 'function') {
+            rootEl.querySelectorAll(`[data-bind$=${field}]`).forEach(el => {
+              const { error, prop, subprop } = parseBind(el.dataset.bind)
+              if (error) {
+                console.warn(error, el)
               } else {
-                el[prop] = Array.isArray(val) ? val.join(' ') : val
+                effect(() => {
+                  const val = this[field]()
+                  if (prop === 'class') {
+                    el.classList[val ? 'add' : 'remove'](subprop)
+                  } else if (subprop) {
+                    el[prop][subprop] = val
+                  } else {
+                    el[prop] = Array.isArray(val) ? val.join(' ') : val
+                    if (prop === 'innerHTML') {
+                      registerRenderingEffects(el)
+                    }
+                  }
+                })
               }
             })
+          } else {
+            return console.warn(`${this.nodeName.toLowerCase()}#${field} is a public field but not a signal`)
           }
         })
-      })
+      }
+      registerRenderingEffects(this)
 
       eventNames.forEach(eventName =>
         // to support events on elements that are added after custom element creation,

@@ -33,7 +33,6 @@ customElements.define('todo-list', class extends ReactiveElement {
           data-args=${i}
           >
         ${todo.title}
-        <my-counter></my-counter>
         <button data-onclick="removeTodo" data-args=${i}>x</button>
       </li>
     `)

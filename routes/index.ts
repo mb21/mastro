@@ -17,6 +17,8 @@ export const GET = async (): Promise<Response> => {
           ${posts.map(post => html`
             <p><a href="${post.slug + '.html' }">${post.data.title}</a></p>
           `)}
+          <h2>Tab-Switch</h2>
+          <tab-switch></tab-switch>
 
           <h2>Todo list</h2>
           ${TodoList()}

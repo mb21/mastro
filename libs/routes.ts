@@ -14,6 +14,7 @@ export const importMap = () => html`
 // TODO: implement this using async and https://docs.deno.com/api/node/fs/~/glob
 export const scripts = (pattern: string) => html`
   <script type="module" src="components/Counter.client.ts"></script>
+  <script type="module" src="components/TabSwitch.client.ts"></script>
   <script type="module" src="components/TodoList/TodoList.client.ts"></script>
   `
 

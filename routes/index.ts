@@ -20,11 +20,6 @@ export const GET = async (): Promise<Response> => {
           <h2>Tab-Switch</h2>
           <tab-switch></tab-switch>
 
-          <h2>Todo list</h2>
-          ${TodoList()}
-
-          <h2>Server-initialized Counter</h2>
-          ${Counter()}
           `
       }),
     )

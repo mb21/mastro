@@ -1,4 +1,4 @@
-import { root, effect } from "@maverick-js/signals"
+import { root, effect, type Dispose } from "@maverick-js/signals"
 import { renderNode } from "./html.ts";
 
 /**
@@ -6,17 +6,16 @@ import { renderNode } from "./html.ts";
  * - make sure life-cycle management is correct:
  *   - see https://x.com/jlarky/status/1848102780428304479
  *   - when we set innerHTML, stop effects of elements we removed
- * - think how multiple nested custom element behave (especially same element nested in itself)
- *   (can we limit scope somehow to current component without using shadom-dom?)
  * - add server render example to docs (we can just import the initialHtml string from the client-component)
  */
 
 export class ReactiveElement extends HTMLElement {
-  #dispose
+  #dispose?: Dispose
+  #eventNames = ['click', 'change', 'input', 'submit'] // override this field as necessary
 
   constructor () {
     super()
-    eventNames.forEach(eventName =>
+    this.#eventNames.forEach(eventName =>
       // to support events on elements that are added after custom element creation,
       // we add a listener to the custom element for each common event name and let the event bubble up there
       this.addEventListener(eventName, e => {
@@ -60,23 +59,25 @@ export class ReactiveElement extends HTMLElement {
           for (const field of Object.getOwnPropertyNames(this)) {
             if (typeof this[field] === 'function') {
               for (const el of rootEl.querySelectorAll(`[data-bind$=${field}]`)) {
-                const { error, prop, subprop } = parseBind(el.dataset.bind)
-                if (!error) {
-                  effect(() => {
-                    const val = this[field]()
-                    if (prop === 'class') {
-                      el.classList[val ? 'add' : 'remove'](subprop)
-                    } else if (subprop) {
-                      el[prop][subprop] = val
-                    } else {
-                      el[prop] = Array.isArray(val) ? val.join(' ') : val
-                      if (prop === 'innerHTML') {
-                        registerRenderingEffects(el)
+                if (!isChildOfOtherCustomElement(rootEl, el)) {
+                  const { error, prop, subprop } = parseBind(el.dataset.bind)
+                  if (!error) {
+                    effect(() => {
+                      const val = this[field]()
+                      if (prop === 'class') {
+                        el.classList[val ? 'add' : 'remove'](subprop)
+                      } else if (subprop) {
+                        el[prop][subprop] = val
+                      } else {
+                        el[prop] = Array.isArray(val) ? val.join(' ') : val
+                        if (prop === 'innerHTML') {
+                          registerRenderingEffects(el)
+                        }
                       }
-                    }
-                  })
-                } else {
-                  console.warn(error, el)
+                    })
+                  } else {
+                    console.warn(error, el)
+                  }
                 }
               }
             } else {
@@ -106,7 +107,15 @@ export class ReactiveElement extends HTMLElement {
   }
 }
 
-const eventNames = ['click', 'change', 'input', 'submit']
+const isChildOfOtherCustomElement = (rootEl: Element, el: Element) => {
+  let p = el.parentElement
+  while (p && p !== rootEl) {
+    if (p.nodeName.includes('-')) {
+      return true
+    }
+    p = p.parentElement
+  }
+}
 
 /**
  * ```

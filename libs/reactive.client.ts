@@ -3,19 +3,45 @@ import { renderNode } from "./html.ts";
 
 /**
  * TODO:
- * - fix life-cycle management:
+ * - make sure life-cycle management is correct:
  *   - see https://x.com/jlarky/status/1848102780428304479
- *   - unsubscribe event listeners
  *   - when we set innerHTML, stop effects of elements we removed
  * - think how multiple nested custom element behave (especially same element nested in itself)
  *   (can we limit scope somehow to current component without using shadom-dom?)
- * - add serve render example to docs (we can just import the initialHtml string from the client-component)
+ * - add server render example to docs (we can just import the initialHtml string from the client-component)
  */
 
 export class ReactiveElement extends HTMLElement {
   #dispose
 
+  constructor () {
+    super()
+    eventNames.forEach(eventName =>
+      // to support events on elements that are added after custom element creation,
+      // we add a listener to the custom element for each common event name and let the event bubble up there
+      this.addEventListener(eventName, e => {
+        const { dataset } = e.target || {}
+        if (dataset['on' + eventName]) {
+          e.stopPropagation()
+          const methodName = dataset['on' + eventName].split('#').pop()
+          if (typeof this[methodName] === 'function') {
+            const args = dataset.args?.split(',') || []
+            this[methodName](e, ...args)
+          } else {
+            console.warn(`${this.nodeName.toLowerCase()}#${methodName} is not a function`)
+          }
+        }
+      })
+    )
+  }
+
   connectedCallback () {
+    if (this.#dispose) {
+      // connectedCallback is also called when custom element is moved,
+      // but we want to run the setup only once
+      return
+    }
+
     if (typeof this.initialHtml === 'function' && !this.innerHTML.trim()) {
       this.innerHTML = renderNode(this.initialHtml())
     }
@@ -71,23 +97,6 @@ export class ReactiveElement extends HTMLElement {
         }
         registerRenderingEffects(this)
 
-        eventNames.forEach(eventName =>
-          // to support events on elements that are added after custom element creation,
-          // we add a listener to the custom element for each common event name and let the event bubble up there
-          this.addEventListener(eventName, e => {
-            const { dataset } = e.target || {}
-            if (dataset['on' + eventName]) {
-              e.stopPropagation()
-              const methodName = dataset['on' + eventName].split('#').pop()
-              if (typeof this[methodName] === 'function') {
-                const args = dataset.args?.split(',') || []
-                this[methodName](e, ...args)
-              } else {
-                console.warn(`${this.nodeName.toLowerCase()}#${methodName} is not a function`)
-              }
-            }
-          })
-        )
       })
     })
   }

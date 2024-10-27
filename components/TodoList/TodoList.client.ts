@@ -58,7 +58,8 @@ customElements.define('todo-list', class extends ReactiveElement {
     }
   }
 
-  removeTodo (_e: Event, i: number) {
+  removeTodo (_e: Event, args: string) {
+    const i = parseInt(args, 10)
     const todos = this.todos()
     this.todos.set([...todos.slice(0, i), ...todos.slice(i + 1)])
   }

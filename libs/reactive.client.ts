@@ -24,8 +24,7 @@ export class ReactiveElement extends HTMLElement {
           e.stopPropagation()
           const methodName = dataset['on' + eventName].split('#').pop()
           if (typeof this[methodName] === 'function') {
-            const args = dataset.args?.split(',') || []
-            this[methodName](e, ...args)
+            this[methodName](e, dataset.args)
           } else {
             console.warn(`${this.nodeName.toLowerCase()}#${methodName} is not a function`)
           }

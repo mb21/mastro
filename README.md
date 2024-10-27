@@ -12,21 +12,23 @@ Not production-ready, this is currently an experiment. I just wanted to see what
 
 - JSON and HTML [route handlers](https://blog.val.town/blog/the-api-we-forgot-to-name/) are uniform. A handler takes a `Request` object (and no props, and hopefully no context).
 
-- Components are simple JS functions that by convention take a props object.
+- Server components are simple JS functions that by convention take a props object.
 
 
 ## How to run
 
-To run the static site generator:
+Start dev server:
 
-    deno run --allow-read --allow-write --allow-net libs/generate.ts
+    deno run dev
+
+Generate static site:
+
+    deno run generate
 
 
 ## TODOs
 
 - Currently, Mastro only does static-site generation. Why start with SSG? And why focus on MPA? See [my blog post](https://mb21.github.io/blog/2023/09/18/building-a-modern-website-ssg-vs-ssr-spa-vs-mpa-svelte-vs-solid.html). But the framework is designed so that we can implement `server.ts` easily (hopefully even supporting HTTP streaming), SSG is a special case of SSR with synthetic requests being generated at build time in `generate.ts`.
-
-- Currently, doesn't support any interactive islands. I would have liked to add SolidJs-island support, but seems that would require babel or a similar transpiler. Perhaps Preact is a better fit, as seen in Deno Fresh. Ideally, we could do something like Qwik's resumability, perhaps using [Maverick.js signals](https://github.com/maverick-js/signals).
 
 - Asset handling (CSS and images) – perhaps we should support something like CSS Modules and image resizing and do that on server startup / static site generation?
 

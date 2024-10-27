@@ -1,4 +1,5 @@
 import { html, unsafeInnerHtml } from './html.ts'
+import { isIterable } from "./iterable.ts";
 
 export const importMap = () => html`
   <script type="importmap">
@@ -18,8 +19,8 @@ export const scripts = (pattern: string) => html`
   <script type="module" src="components/TodoList/TodoList.client.ts"></script>
   `
 
-export const htmlResponse = (body: string, status = 200, headers?: HeadersInit): Response =>
-  new Response(body, {
+export const htmlResponse = (body: string | AsyncIterable<string>, status = 200, headers?: HeadersInit): Response =>
+  new Response(isIterable(body) ? ReadableStream.from(body) : body, {
     status,
     headers: {
       'Content-Type': 'text/html',

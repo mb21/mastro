@@ -1,7 +1,7 @@
 import { Counter } from '../components/Counter.server.ts'
 import { TodoList } from '../components/TodoList/TodoList.server.ts'
 import { Layout } from '../components/layout/Layout.ts'
-import { html, renderNode } from '../libs/html.ts'
+import { html, renderToString } from '../libs/html.ts'
 import { htmlResponse } from '../libs/routes.ts'
 import { getPosts } from '../models/posts.ts'
 
@@ -9,7 +9,7 @@ export const GET = async (): Promise<Response> => {
   const posts = await getPosts()
   const title = 'My blog'
   return htmlResponse(
-    renderNode(
+    await renderToString(
       Layout({
         title,
         children: html`

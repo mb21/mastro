@@ -1,5 +1,5 @@
 import { root, effect, type Dispose } from "@maverick-js/signals"
-import { renderNode } from "./html.ts";
+import { renderToString } from "./html.ts";
 
 /**
  * TODO:
@@ -33,7 +33,7 @@ export class ReactiveElement extends HTMLElement {
     )
   }
 
-  connectedCallback () {
+  async connectedCallback () {
     if (this.#dispose) {
       // connectedCallback is also called when custom element is moved,
       // but we want to run the setup only once
@@ -41,7 +41,7 @@ export class ReactiveElement extends HTMLElement {
     }
 
     if (typeof this.initialHtml === 'function' && !this.innerHTML.trim()) {
-      this.innerHTML = renderNode(this.initialHtml())
+      this.innerHTML = await renderToString(this.initialHtml())
     }
 
     for (const attr of this.attributes) {

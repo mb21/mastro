@@ -1,9 +1,9 @@
-import { type HtmlNode, html } from '../../libs/html.ts'
+import { type HtmlParam, html } from '../../libs/html.ts'
 import { importMap, scripts } from "../../libs/routes.ts";
 import { Menu } from './Menu.ts'
 
 interface Props {
-  children: HtmlNode | HtmlNode[];
+  children: HtmlParam;
   title: string;
 }
 

@@ -14,7 +14,7 @@ export const Layout = (props: Props) => html`
       <meta charset="UTF-8">
       <title>${props.title}</title>
       ${importMap()}
-      ${scripts('components/*.client.ts')}
+      ${scripts('components/**/*.client.ts')}
     </head>
     <body>
       ${Menu()}

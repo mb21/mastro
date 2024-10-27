@@ -68,10 +68,12 @@ export class ReactiveElement extends HTMLElement {
                       } else if (subprop) {
                         el[prop][subprop] = val
                       } else {
-                        el[prop] = Array.isArray(val) ? val.join(' ') : val
-                        if (prop === 'innerHTML') {
-                          registerRenderingEffects(el)
-                        }
+                        renderToString(val).then(v => {
+                          el[prop] = v
+                          if (prop === 'innerHTML') {
+                            registerRenderingEffects(el)
+                          }
+                        })
                       }
                     })
                   } else {

@@ -2,16 +2,15 @@ import { isIterable, iterableToArray } from './iterable.ts'
 
 // deno-lint-ignore ban-types
 type HtmlPrimitive = String | string | number | undefined | null
-type HtmlAsync = HtmlPrimitive | AsyncIterable<HtmlPrimitive> | Promise<HtmlPrimitive>
-export type Html = HtmlAsync | HtmlAsync[]
+export type Html = HtmlPrimitive | HtmlPrimitive[] | AsyncIterable<HtmlPrimitive> | Promise<HtmlPrimitive> | Promise<HtmlPrimitive[]>
 
-export const html = (strings: TemplateStringsArray, ...params: Array<Html | Html[]>): HtmlAsync[] => {
+export const html = (strings: TemplateStringsArray, ...params: Html[]): Array<Exclude<Html, HtmlPrimitive[]>> => {
   const output = []
-  for (let i = 0; i < strings.raw.length; i++) {
-    output.push(unsafeInnerHtml(strings.raw[i]))
+  for (let i = 0; i < strings.length; i++) {
+    output.push(unsafeInnerHtml(strings[i]))
     const p = params[i]
     if (Array.isArray(p)) {
-      output.push(...p.flat())
+      output.push(...p)
     } else {
       output.push(p)
     }
@@ -27,6 +26,7 @@ export const unsafeInnerHtml = (str: string) =>
   new String(str)
 
 export async function * renderToStream (node: Html): AsyncIterable<string> {
+  node = await node
   if (Array.isArray(node)) {
     for (let i = 0; i < node.length; i++) {
       yield* renderToStream(node[i])
@@ -36,8 +36,7 @@ export async function * renderToStream (node: Html): AsyncIterable<string> {
       yield* renderToStream(n)
     }
   } else {
-    const n = await node
-    yield escape(n)
+    yield escape(node)
   }
 }
 

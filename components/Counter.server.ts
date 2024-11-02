@@ -1,4 +1,4 @@
-import { html } from '../libs/html.ts'
+import { html } from '../libs/html.client.ts'
 
 export const Counter = () => html`
   <my-counter start="1">

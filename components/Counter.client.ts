@@ -1,6 +1,6 @@
-import { computed, signal } from '@maverick-js/signals'
+import { computed, signal } from 'client/@maverick-js/signals'
 import { ReactiveElement } from '../libs/reactive.client.ts'
-import { html } from '../libs/html.ts'
+import { html } from '../libs/html.client.ts'
 
 customElements.define('my-counter', class extends ReactiveElement {
   count = signal(parseInt(this.getAttribute('start') || '0', 10))

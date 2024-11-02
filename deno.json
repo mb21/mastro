@@ -6,8 +6,9 @@
   "compilerOptions": {
     "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
   },
+  "nodeModulesDir": "auto",
   "imports": {
-    "@maverick-js/signals": "npm:@maverick-js/signals@6.0.0",
+    "client/@maverick-js/signals": "npm:@maverick-js/signals@6.0.0",
     "@std/front-matter": "jsr:@std/front-matter@^1.0.5",
     "@std/fs": "jsr:@std/fs@^1.0.4",
     "@std/path": "jsr:@std/path@^1.0.6",

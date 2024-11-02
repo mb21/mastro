@@ -1,4 +1,4 @@
-import { type Html, html } from '../../libs/html.ts'
+import { type Html, html } from '../../libs/html.client.ts'
 import { importMap, scripts } from "../../libs/routes.ts";
 import { Menu } from './Menu.ts'
 

@@ -1,6 +1,6 @@
-import { computed, signal } from '@maverick-js/signals'
+import { computed, signal } from 'client/@maverick-js/signals'
 import { ReactiveElement } from '../libs/reactive.client.ts'
-import { html } from '../libs/html.ts'
+import { html } from '../libs/html.client.ts'
 
 customElements.define('user-info', class extends ReactiveElement {
   initialHtml () {

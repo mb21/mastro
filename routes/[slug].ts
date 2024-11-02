@@ -1,6 +1,6 @@
 import { Layout } from "../components/layout/Layout.ts";
 import { StaticPath } from "../libs/generate.ts";
-import { html, renderToString } from '../libs/html.ts'
+import { html, renderToString } from '../libs/html.client.ts'
 import { htmlResponse } from "../libs/routes.ts";
 import { getPost, getPostSlugs } from '../models/posts.ts'
 

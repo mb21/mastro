@@ -1,5 +1,3 @@
-import { isIterable, iterableToArray } from './iterable.ts'
-
 // deno-lint-ignore ban-types
 type HtmlPrimitive = String | string | number | undefined | null
 export type Html = HtmlPrimitive | HtmlPrimitive[] | AsyncIterable<HtmlPrimitive> | Promise<HtmlPrimitive> | Promise<HtmlPrimitive[]>
@@ -41,7 +39,7 @@ export async function * renderToStream (node: Html): AsyncIterable<string> {
 }
 
 export const renderToString = async (node: Html): Promise<string> =>
-  (await iterableToArray(renderToStream(node))).join('')
+  (await Array.fromAsync(renderToStream(node))).join('')
 
 const escape = (n: HtmlPrimitive): string =>
   typeof n === 'string'
@@ -60,3 +58,7 @@ const escapeForAttribute = (str: string) =>
   escapeForHtml(str)
     .replaceAll("'", '&#39;')
     .replaceAll('"', '&quot;')
+
+// deno-lint-ignore no-explicit-any
+const isIterable = <T>(val: any): val is AsyncIterable<T> =>
+  val && typeof val[Symbol.asyncIterator] === 'function'

@@ -1,5 +1,5 @@
-import { root, effect, type Dispose } from "@maverick-js/signals"
-import { renderToString } from "./html.ts";
+import { root, effect, type Dispose } from "client/@maverick-js/signals"
+import { renderToString } from "./html.client.ts";
 
 /**
  * TODO:

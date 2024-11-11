@@ -1,9 +1,13 @@
 // deno-lint-ignore ban-types
 type HtmlPrimitive = String | string | number | undefined | null
-export type Html = HtmlPrimitive | HtmlPrimitive[] | AsyncIterable<HtmlPrimitive> | Promise<HtmlPrimitive> | Promise<HtmlPrimitive[]>
+export type Html =
+  | HtmlPrimitive
+  | Html[]
+  | AsyncIterable<Html>
+  | Promise<Html[]>
 
-export const html = (strings: TemplateStringsArray, ...params: Html[]): Array<Exclude<Html, HtmlPrimitive[]>> => {
-  const output = []
+export const html = (strings: TemplateStringsArray, ...params: Html[]): Html[] => {
+  const output: Html[] = []
   for (let i = 0; i < strings.length; i++) {
     output.push(unsafeInnerHtml(strings[i]))
     const p = params[i]

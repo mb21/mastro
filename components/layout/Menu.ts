@@ -1,7 +1,7 @@
-import { h } from '../../libs/html.ts'
+import { html } from '../../libs/html.client.ts'
 
-export const Menu = () =>
-  h('nav')(
-    h('ul')(
-    )
-  )
+export const Menu = () => html`
+  <nav>
+    <ul></ul>
+  </nav>
+  `

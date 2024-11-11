@@ -1,6 +1,6 @@
 import { Layout } from "../components/layout/Layout.ts";
 import { StaticPath } from "../libs/generate.ts";
-import { h, renderHtmlDoc } from '../libs/html.ts'
+import { html, renderToString } from '../libs/html.client.ts'
 import { htmlResponse } from "../libs/routes.ts";
 import { getPost, getPostSlugs } from '../models/posts.ts'
 
@@ -8,19 +8,16 @@ export const GET = async (req: Request): Promise<Response> => {
   const post = await getPost(getSlug(req.url) || '')
   const title = post.data.title + ' | My blog'
   return htmlResponse(
-    renderHtmlDoc({
-      body: Layout({
-          title,
-          children: [
-            h('article')(
-              h('h2')(post.data.title),
-              h('p')(post.content)
-            )
-          ]
-        }),
-       title,
-       lang: 'en',
-      }
+    await renderToString(
+      Layout({
+        title,
+        children: html`
+          <article>
+            <h2>${post.data.title}</h2>
+            <p>${post.content}</p>
+          </article>
+          `
+      }),
     )
   )
 }
@@ -31,4 +28,4 @@ export const getStaticPaths = async (): Promise<StaticPath[]> => {
 }
 
 const getSlug = (url: string) =>
-  url.split('/').at(-1)
+  url.split('/').at(-1)?.slice(0, -5)

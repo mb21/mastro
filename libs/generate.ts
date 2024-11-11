@@ -1,12 +1,12 @@
-import { dirname } from '$std/path/mod.ts';
-import { walk } from '$std/fs/walk.ts'
+import { dirname } from '@std/path/'
+import { walk } from '@std/fs/'
 import { config } from '../config.ts'
 
 export interface StaticPath {
   params: Record<string, string>;
 }
 
-const generateAll = async () => {
+const generateAllPages = async () => {
   for await (const file of walk('routes')) {
     if (file.isFile && !file.isSymlink && file.name.endsWith('.ts')) {
       const { GET, getStaticPaths } = await import(`../${file.path}`)
@@ -24,9 +24,9 @@ const generateAll = async () => {
       }
     }
   }
+  console.info('\nGenerated static site and wrote to dist/ folder.')
 }
-
-generateAll()
+generateAllPages()
 
 const generatePage = async (path: string, GET: (req: Request) => Promise<Response>) => {
   const req = new Request(filepathToUrl(path))
@@ -53,5 +53,5 @@ const filepathToUrl = (path: string) => {
   if (path.endsWith('/index')) {
     path = path.slice(0, -5) // '/index' -> '/'
   }
-  return config.baseUrl + path
+  return config.baseUrl + path + '.html'
 }

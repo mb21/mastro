@@ -1,4 +1,3 @@
-import tsBlankSpace from 'ts-blank-space'
 import { dirname } from '@std/path/'
 import { walk } from '@std/fs/'
 import { config } from '../config.ts'
@@ -6,17 +5,6 @@ import { config } from '../config.ts'
 export interface StaticPath {
   params: Record<string, string>;
 }
-
-const copyClientFiles = async () => {
-  for await (const file of walk('components')) {
-    if (file.isFile && !file.isSymlink && file.name.endsWith('client.ts')) {
-      const text = await Deno.readTextFile(file.path)
-      const js = tsBlankSpace(text)
-      // TODO: write file
-    }
-  }
-}
-// copyClientFiles()
 
 const generateAllPages = async () => {
   for await (const file of walk('routes')) {

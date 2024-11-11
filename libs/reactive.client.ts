@@ -3,9 +3,8 @@ import { renderToString } from "./html.client.ts";
 
 /**
  * TODO:
- * - make sure life-cycle management is correct:
- *   - see https://x.com/jlarky/status/1848102780428304479
- *   - when we set innerHTML, stop effects of elements we removed
+ * - make sure life-cycle management is correct
+ * - when we set innerHTML, stop effects of elements we removed
  * - add server render example to docs (we can just import the initialHtml string from the client-component)
  */
 

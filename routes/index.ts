@@ -17,14 +17,30 @@ export const GET = async (): Promise<Response> => {
           ${posts.map(post => html`
             <p><a href="${post.slug + '.html' }">${post.data.title}</a></p>
           `)}
-          <h2>Tab-Switch</h2>
-          <tab-switch></tab-switch>
+
+          <h2>Client-initialized Counter</h2>
+          <my-counter></my-counter>
+
+          <h2>Server-initialized Counter</h2>
+          ${Counter()}
 
           <h2>Todo list</h2>
           ${TodoList()}
 
-          <h2>Server-initialized Counter</h2>
-          ${Counter()}
+          <h2>Tab-Switch</h2>
+          <tab-switch></tab-switch>
+
+          <style>
+            html {
+              font-family: sans-serif;
+            }
+            h2 {
+              margin-top: 2em;
+            }
+            .hidden {
+              display: none;
+            }
+          </style>
           `
       }),
     )

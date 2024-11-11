@@ -20,10 +20,15 @@ Deno.serve(async req => {
       const str = await loadModule(specifier)
       return jsResponse(str)
     } else {
-      // TODO: handle slugs aka route params
-      const filePath = pathname.endsWith('.html')
+      let filePath = pathname.endsWith('.html')
         ? `../routes${pathname.slice(0, -5)}.ts`
         : `../routes${pathname}`
+
+      // TODO: actually implement slugs aka route params
+      if (filePath === '../routes/2024-01-01-test-post.ts') {
+        filePath = '../routes/[slug].ts'
+      }
+
       const { GET } = await import(filePath)
       return GET(req)
     }

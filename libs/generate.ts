@@ -24,6 +24,7 @@ const generateAllPages = async () => {
       }
     }
   }
+  console.info('\nGenerated static site and wrote to dist/ folder.')
 }
 generateAllPages()
 
@@ -52,5 +53,5 @@ const filepathToUrl = (path: string) => {
   if (path.endsWith('/index')) {
     path = path.slice(0, -5) // '/index' -> '/'
   }
-  return config.baseUrl + path
+  return config.baseUrl + path + '.html'
 }

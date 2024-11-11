@@ -28,4 +28,4 @@ export const getStaticPaths = async (): Promise<StaticPath[]> => {
 }
 
 const getSlug = (url: string) =>
-  url.split('/').at(-1)
+  url.split('/').at(-1)?.slice(0, -5)

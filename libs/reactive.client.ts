@@ -10,7 +10,8 @@ import { renderToString } from "./html.client.ts";
 
 export class ReactiveElement extends HTMLElement {
   #dispose?: Dispose
-  #eventNames = ['click', 'change', 'input', 'submit'] // override this field as necessary
+  /** override this field in your class constructor as necessary */
+  #eventNames = ['click', 'change', 'input', 'submit']
 
   constructor () {
     super()

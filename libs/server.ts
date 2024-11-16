@@ -1,13 +1,12 @@
 import tsBlankSpace from 'ts-blank-space'
 import { join } from '@std/path'
-import { jsResponse } from "./routes.ts";
+import { matchRoute } from './router.ts'
+import { jsResponse } from './routes.ts'
+
 
 Deno.serve(async req => {
   const url = new URL(req.url)
   const { pathname } = url
-  if (pathname === '/') {
-    return Response.redirect('http://localhost:8000/index.html')
-  }
 
   try {
     if ((pathname.startsWith('/components/') || pathname.startsWith('/libs/'))
@@ -20,19 +19,18 @@ Deno.serve(async req => {
       const str = await loadModule(specifier)
       return jsResponse(str)
     } else {
-      let filePath = pathname.endsWith('.html')
-        ? `../routes${pathname.slice(0, -5)}.ts`
-        : `../routes${pathname}`
-
-      // TODO: actually implement slugs aka route params
-      if (filePath === '../routes/2024-01-01-test-post.ts') {
-        filePath = '../routes/[slug].ts'
+      const route = matchRoute(req.url)
+      if (route) {
+        const modulePath = '../' + route.filePath
+        console.info(`Received ${req.url}, loading ${modulePath}`)
+        const { GET } = await import(modulePath)
+        return await GET(req)
+      } else {
+        return new Response('404 not found', { status: 404 })
       }
-
-      const { GET } = await import(filePath)
-      return GET(req)
     }
   } catch (e) {
+    console.log('hm', e.name)
     if (pathname !== '/favicon.ico') {
       console.warn(e)
     }

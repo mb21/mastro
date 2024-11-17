@@ -1,8 +1,8 @@
 import { Counter } from '../components/Counter.server.ts'
 import { TodoList } from '../components/TodoList/TodoList.server.ts'
 import { Layout } from '../components/layout/Layout.ts'
-import { html, renderToString } from '../libs/html.client.ts'
-import { htmlResponse } from '../libs/routes.ts'
+import { html, renderToString } from 'mastro/html.ts'
+import { htmlResponse } from 'mastro/routes.ts'
 import { getPosts } from '../models/posts.ts'
 
 export const GET = async (): Promise<Response> => {

@@ -1,6 +1,5 @@
 import { dirname } from '@std/path/'
 import { walk } from '@std/fs/'
-import { config } from '../config.ts'
 
 export interface StaticPath {
   params: Record<string, string>;

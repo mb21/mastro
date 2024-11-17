@@ -1,0 +1,14 @@
+{
+  "tasks": {
+    "dev": "deno eval \"import 'mastro/server.ts'\"",
+    "generate": "deno eval \"import 'mastro/generate.ts'\""
+  },
+  "compilerOptions": {
+    "lib": ["dom", "dom.iterable", "dom.asynciterable", "deno.ns"]
+  },
+  "patch": ["../../"],
+  "imports": {
+    "@std/front-matter": "jsr:@std/front-matter@^1.0.5",
+    "mastro/": "../../src/"
+  }
+}

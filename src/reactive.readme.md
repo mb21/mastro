@@ -24,7 +24,7 @@ customElements.define('my-counter', class extends ReactiveElement {
 })
 ```
 
-For more examples and how they are used, see [/components/**/*.client.ts](../components/) and [/routes/index.ts](../routes/index.ts) respectively.
+For more examples and how they are used, see [/components/**/*.client.ts](../examples/blog/components/) and [/routes/index.ts](../examples/blog/routes/index.ts) respectively.
 
 
 ## Motivation
@@ -60,4 +60,4 @@ Finally, in HTMX, every interaction makes a request to the server that sends bac
 
 For signals, we currently use the [maverick-js/signals](https://github.com/maverick-js/signals) library, mostly because it's tiny (~1kB minzipped). But we could consider switching that out with [signal-polyfill](https://github.com/proposal-signals/signal-polyfill) or similar if that would suit our needs better.
 
-Besides that, the implementation is just two very small files: [html](./html.client.ts) and [reactive](./reactive.client.ts).
+Besides that, the implementation is just two very small files: [html](./html.ts) and [reactive](./reactive.ts).

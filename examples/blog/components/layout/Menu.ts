@@ -1,4 +1,4 @@
-import { html } from '../../libs/html.client.ts'
+import { html } from 'mastro/html.ts'
 
 export const Menu = () => html`
   <nav>

@@ -1,8 +1,8 @@
-import { Layout } from "../components/layout/Layout.ts";
-import { StaticPath } from "../libs/generate.ts";
-import { html, renderToString } from '../libs/html.client.ts'
-import { htmlResponse } from "../libs/routes.ts";
-import { getPost, getPostSlugs } from '../models/posts.ts'
+import { Layout } from "../components/layout/Layout.ts"
+import { StaticPath } from "mastro/generate.ts"
+import { html, renderToString } from "mastro/html.ts"
+import { htmlResponse } from "mastro/routes.ts"
+import { getPost, getPostSlugs } from "../models/posts.ts"
 
 export const GET = async (req: Request): Promise<Response> => {
   const post = await getPost(getSlug(req.url) || '')

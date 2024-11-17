@@ -1,5 +1,5 @@
-import { type Html, html } from '../../libs/html.client.ts'
-import { importMap, scripts } from "../../libs/routes.ts";
+import { type Html, html } from 'mastro/html.ts'
+import { importMap, scripts } from "mastro/routes.ts";
 import { Menu } from './Menu.ts'
 
 interface Props {

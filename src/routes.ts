@@ -1,6 +1,6 @@
 import { expandGlob } from '@std/fs'
 
-import { html, unsafeInnerHtml } from './html.client.ts'
+import { html, unsafeInnerHtml } from './html.ts'
 
 export const importMap = async () => {
   const denoImports = JSON.parse(await Deno.readTextFile('deno.json')).imports as Record<string, string>
@@ -8,6 +8,7 @@ export const importMap = async () => {
     acc[key] = `./${key}/`
     return acc
   }, {} as Record<string, string>)
+  imports['mastro/'] = '/client/mastro/'
   return html`
     <script type="importmap">
       ${unsafeInnerHtml(JSON.stringify({
@@ -18,12 +19,11 @@ export const importMap = async () => {
 }
 
 export const scripts = (pattern: string) => {
-  const prefix = import.meta.dirname
-  if (!prefix) throw Error(`import.meta.dirname undefined in routes.ts`)
+  const prefixLength = Deno.cwd().length
   return mapIterable(
     expandGlob(pattern),
     entry => html`
-      <script type="module" src=${entry.path.slice(prefix.length - 5)}></script>`,
+      <script type="module" src=${entry.path.slice(prefixLength)}></script>`,
   )
 }
 

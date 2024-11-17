@@ -1,6 +1,4 @@
-import { computed, signal } from 'client/@maverick-js/signals'
-import { ReactiveElement } from '../../libs/reactive.client.ts'
-import { html } from '../../libs/html.client.ts'
+import { computed, html, ReactiveElement, signal } from 'mastro/reactive.ts'
 
 type TodoItem = { title: string; done: boolean }
 

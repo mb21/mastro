@@ -1,5 +1,16 @@
-import { root, effect, type Dispose } from "client/@maverick-js/signals"
-import { renderToString } from "./html.client.ts";
+import {
+  computed as signalComputed,
+  root,
+  effect as signalEffect,
+  signal as signalSignal,
+  type Dispose,
+} from '/client/@maverick-js/signals/'
+import { renderToString } from './html.ts'
+
+export * from './html.ts'
+export const computed = signalComputed
+export const effect = signalEffect
+export const signal = signalSignal
 
 /**
  * TODO:

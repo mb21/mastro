@@ -16,9 +16,11 @@ Not production-ready, this is currently an experiment. I just wanted to see what
 
 - Server components are simple JS functions that by convention take a props object.
 
-- For client-side components, see [Reactive Mastro](libs/reactive.readme.md).
+- For client-side components, see [Reactive Mastro](src/reactive.readme.md).
 
 ## How to run
+
+`cd examples/blog/`
 
 Start dev server:
 
@@ -31,7 +33,7 @@ Generate static site:
 
 ## TODOs
 
-- Fully implement `libs/generate.ts` (SSG) and `libs/server.ts` (dev and maybe also prod server)
+- Fully implement `src/generate.ts` (SSG) and `src/server.ts` (dev and maybe also prod server)
 
 - publish as package or packages
 

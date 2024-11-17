@@ -3,25 +3,26 @@ import { join } from '@std/path'
 import { matchRoute } from './router.ts'
 import { jsResponse } from './routes.ts'
 
-
 Deno.serve(async req => {
   const url = new URL(req.url)
   const { pathname } = url
 
   try {
-    if ((pathname.startsWith('/components/') || pathname.startsWith('/libs/'))
-        && pathname.endsWith('.client.ts')) {
-      const filePath = pathname.slice(1)
+    if (pathname.startsWith('/components/') && pathname.endsWith('.client.ts')) {
+      const text = await Deno.readTextFile(pathname.slice(1))
+      return jsResponse(tsBlankSpace(text))
+    } else if (pathname.startsWith('/client/mastro/')) {
+      const filePath = import.meta.resolve(pathname.slice('/client/'.length)).slice('file://'.length)
       const text = await Deno.readTextFile(filePath)
       return jsResponse(tsBlankSpace(text))
     } else if (pathname.startsWith('/client/')) {
-      const specifier = import.meta.resolve(pathname.slice(1))
-      const str = await loadModule(specifier)
+      const specifier = import.meta.resolve(pathname)
+      const str = await loadDependency(specifier)
       return jsResponse(str)
     } else {
       const route = matchRoute(req.url)
       if (route) {
-        const modulePath = '../' + route.filePath
+        const modulePath = Deno.cwd() + '/' + route.filePath
         console.info(`Received ${req.url}, loading ${modulePath}`)
         const { GET } = await import(modulePath)
         return await GET(req)
@@ -29,20 +30,19 @@ Deno.serve(async req => {
         return new Response('404 not found', { status: 404 })
       }
     }
-  } catch (e) {
-    console.log('hm', e.name)
+  } catch (e: any) {
     if (pathname !== '/favicon.ico') {
       console.warn(e)
     }
     if (e.name === 'NotFound' || e.code === 'ERR_MODULE_NOT_FOUND') {
       return new Response('404 not found', { status: 404 })
     } else {
-      return new Response(e.name, { status: 500 })
+      return new Response(e.name || 'Unknown error', { status: 500 })
     }
   }
 })
 
-const loadModule = async (specifier: string) => {
+const loadDependency = async (specifier: string) => {
   // TODO: perhaps instead of `nodeModulesDir` in deno.json
   // we could load files from ~/Library/Caches/deno/ (Deno.cacheDir),
   // maybe use https://jsr.io/@deno/cache-dir
@@ -50,7 +50,11 @@ const loadModule = async (specifier: string) => {
   const { pathname, protocol } = new URL(specifier)
   if (protocol === 'npm:') {
     const [module, path] = pathname.split(/@\d+\.\d+\.\d+/)
-    const moduleDir = `node_modules/${module}`
+
+    // TEMP hack: because cwd is e.g. /examples/blog/
+    const prefix = '../..'
+
+    const moduleDir = `${prefix}/node_modules/${module}`
     const pkg = JSON.parse(await Deno.readTextFile(`${moduleDir}/package.json`))
 
     // TODO: also support https://nodejs.org/api/packages.html#main

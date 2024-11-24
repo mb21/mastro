@@ -27,16 +27,15 @@ customElements.define('todo-list', class extends ReactiveElement {
         <input
           type="checkbox"
           ${todo.done ? 'checked' : ''}
-          data-onchange='toggleTodo'
-          data-args=${i}
+          data-onchange='toggleTodo(${i})'
           >
         ${todo.title}
-        <button data-onclick="removeTodo" data-args=${i}>x</button>
+        <button data-onclick="removeTodo(${i})">x</button>
       </li>
     `)
   )
 
-  toggleTodo (e: Event, i: number) {
+  toggleTodo (i: number, e: Event) {
     const { checked } = e.target as HTMLInputElement
     const todos = [...this.todos()]
     todos[i].done = checked
@@ -56,8 +55,7 @@ customElements.define('todo-list', class extends ReactiveElement {
     }
   }
 
-  removeTodo (_e: Event, args: string) {
-    const i = parseInt(args, 10)
+  removeTodo (i: number) {
     const todos = this.todos()
     this.todos.set([...todos.slice(0, i), ...todos.slice(i + 1)])
   }

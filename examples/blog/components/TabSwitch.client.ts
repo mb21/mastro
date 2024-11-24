@@ -26,7 +26,8 @@ customElements.define('tab-switch', class extends ReactiveElement {
         <label>
           User name
           <input data-onchange="setUserName">
-          <user-info company="Octan" data-props="name=userName, tabName=tabName"></user-info>
+          <user-info company="Octan" data-bind="props.name=userName; props.tabName=tabName">
+          </user-info>
         </label>
         `
       case 'settings': return html`
@@ -38,18 +39,12 @@ customElements.define('tab-switch', class extends ReactiveElement {
 
   initialHtml () {
     return html`
-      <div>Logged in as <slot data-bind="userName"></slot></div>
-      <ul>
-        <li>
-          <button data-onclick="switchTo" data-args="home">Home</button>
-        </li>
-        <li>
-          <button data-onclick="switchTo" data-args="profile">Profile</button>
-        </li>
-        <li>
-          <button data-onclick="switchTo" data-args="settings">Settings</button>
-        </li>
-      </ul>
+      <p>Logged in as <slot data-bind="userName"></slot>.</p>
+
+      <button data-onclick="switchTo('home')">Home</button>
+      <button data-onclick="switchTo('profile')">Profile</button>
+      <button data-onclick="switchTo('settings')">Settings</button>
+
       <div data-bind="renderTab"></div>
     `
   }
@@ -59,7 +54,7 @@ customElements.define('tab-switch', class extends ReactiveElement {
     this.userName.set(value)
   }
 
-  switchTo (_e: Event, tabName: string) {
+  switchTo (tabName: string) {
     this.tabName.set(tabName)
   }
 })

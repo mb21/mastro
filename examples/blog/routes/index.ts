@@ -4,6 +4,7 @@ import { Layout } from '../components/layout/Layout.ts'
 import { html, renderToString } from 'mastro/html.ts'
 import { htmlResponse } from 'mastro/routes.ts'
 import { getPosts } from '../models/posts.ts'
+import { SimpleTabs } from "../components/SimpleTabs.server.ts"
 
 export const GET = async (): Promise<Response> => {
   const posts = await getPosts()
@@ -26,6 +27,9 @@ export const GET = async (): Promise<Response> => {
 
           <h2>Todo list</h2>
           ${TodoList()}
+
+          <h2>Simple Tabs</h2>
+          ${SimpleTabs()}
 
           <h2>Tab-Switch</h2>
           <tab-switch></tab-switch>

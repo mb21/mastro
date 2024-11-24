@@ -6,6 +6,7 @@ import {
   type Dispose,
 } from '/client/@maverick-js/signals/'
 import { renderToString } from './html.ts'
+import { parseArgs, parseBind } from "./reactive.util.ts";
 
 export * from './html.ts'
 export const computed = signalComputed
@@ -30,14 +31,20 @@ export class ReactiveElement extends HTMLElement {
       // to support events on elements that are added after custom element creation,
       // we add a listener to the custom element for each common event name and let the event bubble up there
       this.addEventListener(eventName, e => {
-        const { dataset } = e.target || {}
-        if (dataset['on' + eventName]) {
+        const { target } = e
+        const value = target && target instanceof HTMLElement
+          ? target.dataset['on' + eventName]
+          : undefined
+        if (value) {
           e.stopPropagation()
-          const methodName = dataset['on' + eventName].split('#').pop()
+          const [methodName, rawArgs] = value.split('(')
+          const args = parseArgs(rawArgs)
+          // @ts-ignore noImplicitAny
           if (typeof this[methodName] === 'function') {
-            this[methodName](e, dataset.args)
+            // @ts-ignore noImplicitAny
+            this[methodName](...args, e)
           } else {
-            console.warn(`${this.nodeName.toLowerCase()}#${methodName} is not a function`)
+            console.warn(`${this.nodeName.toLowerCase()}#${methodName.toString()} is not a function`)
           }
         }
       })
@@ -51,12 +58,19 @@ export class ReactiveElement extends HTMLElement {
       return
     }
 
+    // @ts-ignore key initialHtml does not exist
     if (typeof this.initialHtml === 'function' && !this.innerHTML.trim()) {
-      this.innerHTML = await renderToString(this.initialHtml())
+      this.innerHTML = await renderToString(
+        // @ts-ignore key initialHtml does not exist
+        this.initialHtml()
+      )
     }
 
     for (const attr of this.attributes) {
       if (!attr.name.startsWith('data-')) {
+        // in order to have a uniform interface for component props,
+        // we create signals from static attributes and assign them to fields
+        // @ts-ignore noImplicitAny
         this[attr.name] = () => attr.value
       }
     }
@@ -66,50 +80,49 @@ export class ReactiveElement extends HTMLElement {
         this.#dispose = dispose
 
         const registerRenderingEffects = (rootEl: Element) => {
-          for (const field of Object.getOwnPropertyNames(this)) {
-            if (typeof this[field] === 'function') {
-              for (const el of rootEl.querySelectorAll(`[data-bind$=${field}]`)) {
-                if (!isChildOfOtherCustomElement(rootEl, el)) {
-                  const { error, prop, subprop } = parseBind(el.dataset.bind)
-                  if (!error) {
-                    effect(() => {
-                      const val = this[field]()
-                      if (prop === 'class') {
-                        el.classList[val ? 'add' : 'remove'](subprop)
-                      } else if (subprop) {
-                        el[prop][subprop] = val
-                      } else {
-                        renderToString(val).then(v => {
-                          el[prop] = v
-                          if (prop === 'innerHTML') {
-                            registerRenderingEffects(el)
-                          }
-                        })
-                      }
-                    })
-                  } else {
-                    console.warn(error, el)
-                  }
-                }
-              }
-            } else {
-              return console.warn(`${this.nodeName.toLowerCase()}#${field} is a public field but not a signal`)
-            }
-
-            for (const el of rootEl.querySelectorAll(`[data-props]`)) {
-              for (const p of el.dataset.props.split(',')) {
-                const [prop, field] = p.split('=').map(s => s.trim())
-                if (prop && field && typeof this[field] === 'function') {
-                  el[prop] = this[field]
+          for (const el of rootEl.querySelectorAll(`[data-bind]`)) {
+            if (el instanceof HTMLElement && !isChildOfOtherCustomElement(rootEl, el)) {
+              for (const bind of el.dataset.bind?.split(';') || []) {
+                const { error, prop, subprop, fieldOrMethod, args } = parseBind(bind)
+                if (error) {
+                  console.warn(error, el)
+                // @ts-ignore noImplicitAny
+                } else if (typeof this[fieldOrMethod] !== 'function') {
+                  console.warn(`${this.nodeName.toLowerCase()}#${fieldOrMethod
+                    } is not a signal or method`, el)
                 } else {
-                  console.warn('Could not parse data-props of', el, `or ${this.nodeName.toLowerCase()}#${field} is not a signal`)
+                  effect(() => {
+                    // @ts-ignore noImplicitAny
+                    const val = this[fieldOrMethod](...args)
+                    if (prop === 'class' && subprop) {
+                      // e.g. data-bind="class.myClass = myField"
+                      el.classList[val ? 'add' : 'remove'](subprop)
+                    } else if (prop === 'props' && subprop) {
+                      // e.g. data-bind="props.myChildField = myParentField"
+                      // @ts-ignore noImplicitAny
+                      el[subprop] = this[fieldOrMethod]
+                    } else if (subprop) {
+                      // e.g. data-bind="dataset.myKey = myField"
+                      // @ts-ignore noImplicitAny
+                      el[prop][subprop] = val
+                    } else if (prop === 'innerHTML') {
+                      // e.g. data-bind="myField"
+                      renderToString(val).then(v => {
+                        el[prop] = v
+                        registerRenderingEffects(el)
+                      })
+                    } else {
+                      // e.g. data-bind="required = myField"
+                      // @ts-ignore noImplicitAny
+                      el[prop] = val
+                    }
+                  })
                 }
               }
             }
           }
         }
         registerRenderingEffects(this)
-
       })
     })
   }
@@ -126,23 +139,5 @@ const isChildOfOtherCustomElement = (rootEl: Element, el: Element) => {
       return true
     }
     p = p.parentElement
-  }
-}
-
-/**
- * ```
- * parseBind('prop.subprop=value') === { prop, subprop }
- * parseBind('value') === { prop: 'innerHTML' }
- * ```
- */
-const parseBind = (bind: string) => {
-  const parts = bind.split('=')
-  if (parts.length === 2) {
-    const [prop, subprop] = parts[0].trim().split('.')
-    return prop
-      ? { prop, subprop }
-      : { error: 'Found invalid data-bind value' }
-  } else {
-    return { prop: 'innerHTML' }
   }
 }

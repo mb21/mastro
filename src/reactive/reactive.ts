@@ -4,7 +4,7 @@ import {
   effect as signalEffect,
   signal as signalSignal,
   type Dispose,
-} from '/client/@maverick-js/signals/'
+} from '@maverick-js/signals'
 import { renderToString } from '../html.ts'
 import { parseArgs, parseBind } from "./reactive.util.ts";
 

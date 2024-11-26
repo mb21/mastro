@@ -9,6 +9,7 @@ export const importMap = async () => {
     return acc
   }, {} as Record<string, string>)
   imports['mastro/reactive'] = '/client/mastro/reactive/reactive.ts'
+  imports['@maverick-js/signals'] = '/client/@maverick-js/signals/'
   return html`
     <script type="importmap">
       ${unsafeInnerHtml(JSON.stringify({

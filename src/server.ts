@@ -16,7 +16,7 @@ Deno.serve(async req => {
       const text = await Deno.readTextFile(filePath)
       return jsResponse(tsBlankSpace(text))
     } else if (pathname.startsWith('/client/')) {
-      const specifier = import.meta.resolve(pathname)
+      const specifier = import.meta.resolve(pathname.slice('/client/'.length))
       const str = await loadDependency(specifier)
       return jsResponse(str)
     } else {

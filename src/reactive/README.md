@@ -24,7 +24,7 @@ customElements.define('my-counter', class extends ReactiveElement {
 })
 ```
 
-For more examples and how they are used, see [/components/**/*.client.ts](../examples/blog/components/) and [/routes/index.ts](../examples/blog/routes/index.ts) respectively.
+For more examples and how they are used, see [/components/**/*.client.ts](../../examples/blog/components/) and [/routes/index.ts](../../examples/blog/routes/index.ts) respectively.
 
 
 ## Motivation

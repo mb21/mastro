@@ -8,7 +8,7 @@ export const importMap = async () => {
     acc[key] = `./${key}/`
     return acc
   }, {} as Record<string, string>)
-  imports['mastro/'] = '/client/mastro/'
+  imports['mastro/reactive'] = '/client/mastro/reactive/reactive.ts'
   return html`
     <script type="importmap">
       ${unsafeInnerHtml(JSON.stringify({

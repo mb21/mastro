@@ -1,4 +1,4 @@
-import { computed, html, ReactiveElement, signal } from 'mastro/reactive.ts'
+import { computed, html, ReactiveElement, signal } from 'mastro/reactive'
 
 type TodoItem = { title: string; done: boolean }
 

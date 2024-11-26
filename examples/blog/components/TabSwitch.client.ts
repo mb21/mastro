@@ -1,4 +1,4 @@
-import { computed, html, ReactiveElement, signal } from 'mastro/reactive.ts'
+import { computed, html, ReactiveElement, signal } from 'mastro/reactive'
 
 customElements.define('user-info', class extends ReactiveElement {
   initialHtml () {

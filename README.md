@@ -16,7 +16,7 @@ Not production-ready, this is currently an experiment. I just wanted to see what
 
 - Server components are simple JS functions that by convention take a props object.
 
-- For client-side components, see [Reactive Mastro](src/reactive.readme.md).
+- For client-side components, see [Reactive Mastro](src/reactive/).
 
 ## How to run
 

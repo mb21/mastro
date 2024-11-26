@@ -5,10 +5,10 @@ import {
   signal as signalSignal,
   type Dispose,
 } from '/client/@maverick-js/signals/'
-import { renderToString } from './html.ts'
+import { renderToString } from '../html.ts'
 import { parseArgs, parseBind } from "./reactive.util.ts";
 
-export * from './html.ts'
+export * from '../html.ts'
 export const computed = signalComputed
 export const effect = signalEffect
 export const signal = signalSignal

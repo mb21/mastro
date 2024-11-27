@@ -1,27 +1,14 @@
-import {
-  computed as signalComputed,
-  root,
-  effect as signalEffect,
-  signal as signalSignal,
-  type Dispose,
-} from '@maverick-js/signals'
+import * as signals from '@maverick-js/signals'
 import { renderToString } from '../html.ts'
 import { parseArgs, parseBind } from "./reactive.util.ts";
 
 export * from '../html.ts'
-export const computed = signalComputed
-export const effect = signalEffect
-export const signal = signalSignal
-
-/**
- * TODO:
- * - make sure life-cycle management is correct
- * - when we set innerHTML, stop effects of elements we removed
- * - add server render example to docs (we can just import the initialHtml string from the client-component)
- */
+export const computed = signals.computed
+export const effect = signals.effect
+export const signal = signals.signal
 
 export class ReactiveElement extends HTMLElement {
-  #dispose?: Dispose
+  #dispose?: signals.Dispose
   /** override this field in your class constructor as necessary */
   #eventNames = ['click', 'change', 'input', 'submit']
 
@@ -76,7 +63,7 @@ export class ReactiveElement extends HTMLElement {
     }
 
     setTimeout(() => {
-      root(dispose => {
+      signals.root(dispose => {
         this.#dispose = dispose
 
         const registerRenderingEffects = (rootEl: Element) => {

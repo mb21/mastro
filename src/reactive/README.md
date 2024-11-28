@@ -1,21 +1,24 @@
 # Reactive Mastro
 
-Server part is plain HTML (from any server, static file, etc):
+A tiny ([2.6kB minzipped](https://bundlephobia.com/package/mastro)) reactive GUI library for your existing MPA. Reactive Mastro sits somewhere in between React/Vue/Solid/Svelte one one end, and Alpine/HTMX/Stimulus on the other end – while being smaller and simpler than all of them.
+
+Reactive Mastro was conceived as the client-side part of [Mastro](https://github.com/mb21/mastro/), but you can just as well use it with any other static site or server that renders HTML (such as Rails, Django, PHP, etc).
+
+Server-side part is plain HTML:
 
 ```html
 <my-counter>
   Count is <span data-bind="count">0</span>
-  <button data-onclick='inc'>+</button>
+  <button data-onclick="inc">+</button>
 </my-counter>
 ```
 
-
-Client part is plain JavaScript:
+Client-side part is plain JavaScript:
 
 ```js
-import { ReactiveElement, signal } from 'mastro/reactive'
+import { ReactiveElement, signal } from "mastro/reactive"
 
-customElements.define('my-counter', class extends ReactiveElement {
+customElements.define("my-counter", class extends ReactiveElement {
   count = signal(0)
 
   inc () {
@@ -24,14 +27,93 @@ customElements.define('my-counter', class extends ReactiveElement {
 })
 ```
 
-For more examples and how they are used, see [/components/**/*.client.ts](../../examples/blog/components/) and [/routes/index.ts](../../examples/blog/routes/index.ts) respectively.
+For more examples, see [components/](../../examples/blog/components/), this [Todo list CodePen](https://codepen.io/mb2100/pen/EaYjRvW), or continue reading.
+
+## Installation
+
+### Bundling yourself
+
+If your project uses a bundler, you can add the `mastro` package as a dependency:
+
+    npm install mastro
+
+Using the [Astro framework](https://astro.build/) for example, you can then use it in a `.astro` component like:
+
+```html
+<my-counter>
+  Count is <span data-bind="count">0</span>
+  <button data-onclick="inc">+</button>
+</my-counter>
+
+<script>
+  import { ReactiveElement, signal } from "mastro/reactive"
+
+  customElements.define("my-counter", class extends ReactiveElement {
+    count = signal(0)
+    inc () {
+      this.count.set(c => c + 1)
+    }
+  })
+</script>
+```
+
+(This will usually bundle Reactive Mastro together with your own JavaScript. That means one http request less, but it also means that every time you change your JavaScript, the whole bundle changes and its cache is invalidated.)
+
+### Pre-bundled from CDN
+
+If you don't want to deal with the complexities of a bundler, you can use the version pre-bundled and minified by [esm.sh](https://esm.sh/). Import it as a [JavaScript module](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Modules), for example:
+
+```html
+<script type="module">
+  import { ReactiveElement, signal } from "https://esm.sh/mastro@0.0.3/reactive?bundle-deps"
+```
+
+Instead of referencing the esm.sh CDN directly, you can of course also [**download Reactive Mastro**](https://esm.sh/stable/mastro@0.0.3/es2022/reactive.bundle.js?bundle-deps) and host it together with your other static assets.
+
+Either way, we recommend using an [import map](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/script/type/importmap) so that you can refer to the file in all your own JavaScript modules using the shorthand `mastro/reactive`. That way, there is only one place to update the version number, and changing it will not change your own JavaScript files, which would invalidate their cache.
+
+Here's a complete example that you can save as a `.html` file and open it in your browser by double clicking:
+
+```html
+<!doctype html>
+<html lang="en">
+  <head>
+    <title>Counter</title>
+    <script type="importmap">
+      {
+        "imports": {
+          "mastro/reactive": "https://esm.sh/stable/mastro@0.0.3/es2022/reactive.bundle.js?bundle-deps"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <my-counter>
+      Count is <span data-bind="count">0</span>
+      <button data-onclick="inc">+</button>
+    </my-counter>
+
+    <script type="module">
+      import { ReactiveElement, signal } from "mastro/reactive"
+
+      customElements.define("my-counter", class extends ReactiveElement {
+        count = signal(0)
+        inc () {
+          this.count.set(c => c + 1)
+        }
+      })
+    </script>
+  </body>
+</html>
+```
 
 
 ## Motivation
 
-The design goal for Reactive Mastro is to be a reactive GUI library that sits somewhere in between React/Vue/Solid/Svelte one one end, and Alpine/HTMX/Stimulus on the other end – while being smaller and simpler than all of them.
+If you want the fastest initial page load possible, you will want to send very little JavaScript to the client. For almost all kinds of websites, that means you want a MPA (Multi-Page App). If you need convincing, read Astro's [content-driven and server-first](https://docs.astro.build/en/concepts/why-astro/#content-driven) sections, or Nolan's [the balance has shifted away from SPAs](https://nolanlawson.com/2022/05/21/the-balance-has-shifted-away-from-spas/). Browsers have really stepped up their game regarding MPA page navigations. Two highlights:
 
-If you want a fast initial page load, you will want to send as little JavaScript to the client as possible. That means you want a MPA (Multi-Page App). If you need convincing, read [the balance has shifted away from SPAs](https://nolanlawson.com/2022/05/21/the-balance-has-shifted-away-from-spas/) and [Why server-first](https://docs.astro.build/en/concepts/why-astro/#content-driven).
+- [back-forward cache](https://web.dev/articles/bfcache) is implemented in all modern browsers (meaning e.g. an infinite-loading list added with JavaScript will still be there on browser back navigation)
+- [cross-document view transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API/Using#basic_mpa_view_transition) are implemented in Chrome and the Safari Technology Preview.
 
 ### How does it compare to React, Vue, Solid, Svelte etc?
 
@@ -51,10 +133,10 @@ While you can use TypeScript for server and client logic, not having a template 
 
 While these libraries are also tailored towards MPAs, and also integrate well with whatever server-side HTML templating system you’ve already in place, Reactive Mastro is even smaller:
 
-- Smaller in terms of JavaScript size: Reactive Mastro is ~5kb vs the others >10kb minified+gzipped, and
-- smaller in terms of API surface to learn.
+- smaller in terms of JavaScript size: minified+gzipped, [Reactive Mastro is 2.6kB](https://bundlephobia.com/package/mastro) vs the others >10kB
+- smaller in terms of API surface to learn
 
-In Alpine, you put all logic into HTML attributes. Reactive Mastro only uses attributes to attach the signals and event listeners to the DOM. The rest is written in normal JavaScript using signals, giving you a declarative developer experience. You will be familiar with [signals](https://docs.solidjs.com/concepts/intro-to-reactivity) if you have used either Solid, Svelte runes, Vue refs or Preact signals. The use of signals is also one of the differentiators to Stimulus, where you have to remember to imperatively call the right method to update the DOM yourself in all the right places. In contrast to Reactive Mastro, Stimulus also requires `controller` and `target` attributes, and doesn't do any client-side HTML rendering at all.
+In Alpine, you put all logic into HTML attributes. Reactive Mastro only uses attributes to attach the signals and event listeners to the DOM. The rest is written in normal JavaScript using signals, giving you a declarative developer experience. You will be familiar with [signals](https://docs.solidjs.com/concepts/intro-to-reactivity) if you have used either Solid, Svelte runes, Vue refs or Preact signals. The use of signals is also one of the differentiators to Stimulus, where you have to remember to imperatively call the right method to update the DOM yourself in all the right places. Stimulus also requires you to add the right `data-controller` and `data-x-target` attributes, which are not needed in Reactive Mastro.
 
 Finally, there is HTMX, where every interaction makes a request to the server which sends back some HTML that’s inserted into the DOM. You never have to think about generating HTML on the client. But it also comes at a steep cost in terms of GUI-latency, especially on a bad network connection.
 
@@ -100,15 +182,15 @@ Server HTML:
 Client JS:
 
 ```js
-import { html, ReactiveElement, signal } from 'mastro/reactive'
+import { html, ReactiveElement, signal } from "mastro/reactive"
 
-customElements.define('my-counter', class extends ReactiveElement {
-  count = signal(parseInt(this.getAttribute('start') || '0', 10))
+customElements.define("my-counter", class extends ReactiveElement {
+  count = signal(parseInt(this.getAttribute("start") || "0", 10))
 
   initialHtml () {
     return html`
-      Counting <span data-bind="count">${this.getAttribute('start')}</span>
-      <button data-onclick='inc'>+</button>
+      Counting <span data-bind="count">${this.getAttribute("start")}</span>
+      <button data-onclick="inc">+</button>
     `
   }
 
@@ -128,7 +210,7 @@ However, often you don't need the ability to client-side render the whole compon
 
 It also enables you to more clearly think about what your page will look like before JavaScript finishes loading and executing, or when it fails to execute at all – an old idea called [progressive enhancement](https://developer.mozilla.org/en-US/docs/Glossary/Progressive_Enhancement).
 
-This might mean that instead of adding and removing HTML elements in the DOM with client-side JavaScript, you server-side render all of them, and then hide some with client-side JavaScript and CSS. For example, to either show one tab or the other, in React it's common to do something like `{visibleTab === 'tab1' ? <Tab1 /> : <Tab2 />}`. But that means you need to send the JavaScript to render both Tab1 and Tab2 to the client. You can avoid that e.g. as follows:
+This might mean that instead of adding and removing HTML elements in the DOM with client-side JavaScript, you server-side render all of them, and then hide some with client-side JavaScript and CSS. For example, to either show one tab or the other, in React it's common to do something like `{visibleTab === "tab1" ? <Tab1 /> : <Tab2 />}`. But that means you need to send the JavaScript to render both Tab1 and Tab2 to the client. You can avoid that e.g. as follows:
 
 Server HTML:
 
@@ -158,10 +240,10 @@ Server HTML:
 Client JS:
 
 ```js
-import { ReactiveElement, signal } from 'mastro/reactive'
+import { ReactiveElement, signal } from "mastro/reactive"
 
-customElements.define('simple-tabs', class extends ReactiveElement {
-  activeTab = signal('home')
+customElements.define("simple-tabs", class extends ReactiveElement {
+  activeTab = signal("home")
 
   switchTo (tab: string) {
     this.activeTab.set(tab)
@@ -204,12 +286,12 @@ If you want to avoid introducing an extra box in the layout (e.g. when using thi
 
 ### How do I add event listeners for less common events?
 
-To support events on HTML elements that are added to the DOM after custom element creation (e.g. as the result of a user interaction), Reactive Mastro adds one listener for each common event name (`'click', 'change', 'input', 'submit'`) to the custom element and lets the event bubble up there. However, you can customize that list:
+To support events on HTML elements that are added to the DOM after custom element creation (e.g. as the result of a user interaction), Reactive Mastro adds one listener for each common event name (`click`, `change`, `input` and `submit`) to the custom element and lets the event bubble up there. However, you can customize that list:
 
 ```js
-customElements.define('my-counter', class extends ReactiveElement {
+customElements.define("my-counter", class extends ReactiveElement {
   constructor () {
-    this.#eventNames.push('focus', 'blur')
+    this.#eventNames.push("focus", "blur")
     super()
   }
 })

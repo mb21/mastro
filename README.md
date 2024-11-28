@@ -1,12 +1,16 @@
 # Mastro
 
-A *m*inimal, no-dependencies take on an [*Astro*](https://astro.build)-like MPA web framework.
+A *m*inimal take on an [*Astro*](https://astro.build)-like MPA web framework.
 
-Not production-ready, this is currently an experiment. I just wanted to see what the simplest web framework I could think of would look like that still offered a nice developer experience.
+🚧 While the Mastro server framework is still a work in progress, the client-side part is already very usable: see [**Reactive Mastro**](src/reactive/).
+
+## Philosophy
 
 - No magic. Easy to understand codebase using simple JS functions wherever possible. Favour small, [composable functions](https://mb21.github.io/blog/2021/09/11/composable-abstractions.html).
 
-- No build step for server-side code (so you get clean stack traces). For the development mode, we currently only use [ts-blank-space](https://bloomberg.github.io/ts-blank-space/). Maybe we'll have to add some form of production bundling for client-side code eventually, let's see.
+- Zero client-side JavaScript by default.
+
+- No build step or bundler by default.
 
 - Minimal dependencies (see `deno.json`)
 
@@ -24,7 +28,7 @@ Not production-ready, this is currently an experiment. I just wanted to see what
 
 Start dev server:
 
-    deno run dev
+    deno run start
 
 Generate static site:
 

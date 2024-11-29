@@ -3,7 +3,7 @@ import { join } from '@std/path'
 import { matchRoute } from './router.ts'
 import { jsResponse } from './routes.ts'
 
-Deno.serve(async req => {
+export const handler: Deno.ServeHandler = async req => {
   const url = new URL(req.url)
   const { pathname } = url
 
@@ -40,7 +40,7 @@ Deno.serve(async req => {
       return new Response(e.name || 'Unknown error', { status: 500 })
     }
   }
-})
+}
 
 const loadDependency = async (specifier: string) => {
   // TODO: perhaps instead of `nodeModulesDir` in deno.json

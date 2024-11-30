@@ -4,15 +4,22 @@ export type Html =
   | HtmlPrimitive
   | Html[]
   | AsyncIterable<Html>
+  | Promise<HtmlPrimitive>
   | Promise<Html[]>
 
 export const html = (strings: TemplateStringsArray, ...params: Html[]): Html[] => {
   const output: Html[] = []
+  let insideTag = false
   for (let i = 0; i < strings.length; i++) {
-    output.push(unsafeInnerHtml(strings[i]))
+    const str = strings[i]
+    output.push(unsafeInnerHtml(str))
+    insideTag = (insideTag ? 1 : 0) + nrOf(str, '<') - nrOf(str, '>') === 1
     const p = params[i]
     if (Array.isArray(p)) {
       output.push(...p)
+    } else if (insideTag && endsWithEq(output.at(-1))) {
+      // add quotes around attribute for e.g. html`<div class=${'my class'}></div>`
+      output.push(unsafeInnerHtml('"'), p, unsafeInnerHtml('"'))
     } else {
       output.push(p)
     }
@@ -43,7 +50,9 @@ export async function * renderToStream (node: Html): AsyncIterable<string> {
 }
 
 export const renderToString = async (node: Html): Promise<string> =>
-  (await Array.fromAsync(renderToStream(node))).join('')
+  typeof node !== 'object' || node instanceof String
+    ? escape(node)
+    : (await Array.fromAsync(renderToStream(node))).join('')
 
 const escape = (n: HtmlPrimitive): string =>
   typeof n === 'string'
@@ -66,3 +75,14 @@ const escapeForAttribute = (str: string) =>
 // deno-lint-ignore no-explicit-any
 const isIterable = <T>(val: any): val is AsyncIterable<T> =>
   val && typeof val[Symbol.asyncIterator] === 'function'
+
+const endsWithEq = (prev: Html) =>
+  typeof prev === 'object'
+    && typeof (prev as string)?.endsWith === 'function'
+    && (prev as string).endsWith('=')
+
+/**
+ * `nrOf(str, char)` returns the number of times `char` occurs in `str`
+ */
+const nrOf = (str: string, char: string) =>
+  str.split(char).length - 1

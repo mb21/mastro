@@ -12,12 +12,17 @@ export class ReactiveElement extends HTMLElement {
   /** override this field in your class constructor as necessary */
   #eventNames = ['click', 'change', 'input', 'submit']
 
-  constructor () {
-    super()
+  async connectedCallback () {
+    if (this.#dispose) {
+      // connectedCallback is also called when custom element is moved,
+      // but we want to run the setup only once
+      return
+    }
+
     this.#eventNames.forEach(eventName =>
       // to support events on elements that are added after custom element creation,
       // we add a listener to the custom element for each common event name and let the event bubble up there
-      this.addEventListener(eventName, e => {
+      (this.shadowRoot || this).addEventListener(eventName, e => {
         const { target } = e
         const value = target && target instanceof HTMLElement
           ? target.dataset['on' + eventName]
@@ -36,18 +41,10 @@ export class ReactiveElement extends HTMLElement {
         }
       })
     )
-  }
-
-  async connectedCallback () {
-    if (this.#dispose) {
-      // connectedCallback is also called when custom element is moved,
-      // but we want to run the setup only once
-      return
-    }
 
     // @ts-ignore key initialHtml does not exist
     if (typeof this.initialHtml === 'function' && !this.innerHTML.trim()) {
-      this.innerHTML = await renderToString(
+      (this.shadowRoot || this).innerHTML = await renderToString(
         // @ts-ignore key initialHtml does not exist
         this.initialHtml()
       )
@@ -66,7 +63,7 @@ export class ReactiveElement extends HTMLElement {
       signals.root(dispose => {
         this.#dispose = dispose
 
-        const registerRenderingEffects = (rootEl: Element) => {
+        const registerRenderingEffects = (rootEl: Element | ShadowRoot) => {
           for (const el of rootEl.querySelectorAll(`[data-bind]`)) {
             if (el instanceof HTMLElement && !isChildOfOtherCustomElement(rootEl, el)) {
               for (const bind of el.dataset.bind?.split(';') || []) {
@@ -109,7 +106,7 @@ export class ReactiveElement extends HTMLElement {
             }
           }
         }
-        registerRenderingEffects(this)
+        registerRenderingEffects(this.shadowRoot || this)
       })
     })
   }
@@ -119,7 +116,7 @@ export class ReactiveElement extends HTMLElement {
   }
 }
 
-const isChildOfOtherCustomElement = (rootEl: Element, el: Element) => {
+const isChildOfOtherCustomElement = (rootEl: Element | ShadowRoot, el: Element) => {
   let p = el.parentElement
   while (p && p !== rootEl) {
     if (p.nodeName.includes('-')) {

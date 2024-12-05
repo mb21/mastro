@@ -1,6 +1,6 @@
 # Reactive Mastro
 
-A tiny ([2.6kB minzipped](https://bundlephobia.com/package/mastro)) reactive GUI library for your existing MPA. Reactive Mastro sits somewhere in between React/Vue/Solid/Svelte one one end, and Alpine/HTMX/Stimulus on the other end – while being smaller and simpler than all of them.
+A tiny ([2.7kB minzipped](https://bundlephobia.com/package/mastro)) reactive GUI library for your existing MPA. Reactive Mastro sits somewhere in between React/Vue/Solid/Svelte one one end, and Alpine/HTMX/Stimulus on the other end – while being smaller and simpler than all of them.
 
 Reactive Mastro was conceived as the client-side part of [Mastro](https://github.com/mb21/mastro/), but you can just as well use it with any other static site or server that renders HTML (such as Rails, Django, PHP, etc).
 
@@ -28,6 +28,8 @@ customElements.define("my-counter", class extends ReactiveElement {
 ```
 
 For more examples, see [components/](../../examples/blog/components/), this [Todo list CodePen](https://codepen.io/mb2100/pen/EaYjRvW), or continue reading.
+
+See below for docs on the syntax of the only two attributes you'll have to learn to use Reactive Mastro: [`data-bind`](#whats-the-exact-syntax-for-data-bind) and [`data-on*`](#whats-the-exact-syntax-for-data-on).
 
 ## Installation
 
@@ -133,7 +135,7 @@ While you can use TypeScript for server and client logic, not having a template 
 
 While these libraries are also tailored towards MPAs, and also integrate well with whatever server-side HTML templating system you’ve already in place, Reactive Mastro is even smaller:
 
-- smaller in terms of JavaScript size: minified+gzipped, [Reactive Mastro is 2.6kB](https://bundlephobia.com/package/mastro) vs the others >10kB
+- smaller in terms of JavaScript size: minified+gzipped, [Reactive Mastro is 2.7kB](https://bundlephobia.com/package/mastro) vs the others >10kB
 - smaller in terms of API surface to learn
 
 In Alpine, you put all logic into HTML attributes. Reactive Mastro only uses attributes to attach the signals and event listeners to the DOM. The rest is written in normal JavaScript using signals, giving you a declarative developer experience. You will be familiar with [signals](https://docs.solidjs.com/concepts/intro-to-reactivity) if you have used either Solid, Svelte runes, Vue refs or Preact signals. The use of signals is also one of the differentiators to Stimulus, where you have to remember to imperatively call the right method to update the DOM yourself in all the right places. Stimulus also requires you to add the right `data-controller` and `data-x-target` attributes, which are not needed in Reactive Mastro.
@@ -151,12 +153,12 @@ Besides that, the implementation of Reactive Mastro is just three very small fil
 
 ### Custom elements
 
-To connect our JavaScript with the right HTML element on the page, we use [custom elements](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements). Custom elements are part of the [web components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components) suite of technologies. But when using Reactive Mastro, there is no need to use shadom DOM (which has a lot of gotchas) nor `<template>` elements (which are only useful with shadom DOM).
+To connect our JavaScript with the right HTML element on the page, we use [custom elements](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements). Custom elements are part of the [web components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components) suite of technologies. But when using Reactive Mastro, you don't have to use shadom DOM (which has a lot of gotchas) nor `<template>` elements (which are only useful with shadom DOM).
 
 Using custom elements means the browser handles most of the work for us, such as enabling multiple instances of the same component on the same page and instantiation of nested components as soon as they're in the DOM. You register your custom element once with `window.customElements.define('my-counter', class extends ReactiveElement { })` (the name must start with a lowercase letter and contain a hyphen), and then you can use it wherever in your HTML body, e.g. `<my-counter></my-counter>`. No JavaScript imports nor manually calling a constructor needed.
 
 Your class extends Reactive Mastro's `ReactiveElement` class, which in turn extends the browser's `HTMLElement` class. Thus you're almost using plain
-custom elements, and have access to all native methods and callbacks, should you choose to use them. However, `ReactiveElement` does two things for you:
+custom elements, and have access to all native callbacks and methods (such as [attaching shadow DOM](https://github.com/mb21/mastro/issues/2)), should you choose to use them. However, what `ReactiveElement` does for you on `connectedCallback` is two things:
 
 - attach event listeners wherever you use `data-on*` (e.g. `data-onclick`), and
 - bind signals to the DOM wherever you use `data-bind`.
@@ -265,7 +267,7 @@ Note how we intentially didn't add the `hidden` class in the HTML sent from the 
 The following syntax variations are supported:
 
 - `<div data-bind="myField"></div>` binds the `myField` signal to the **contents** of the div. If the signal contains a plain string, it will be escaped. To insert HTML, use Reactive Mastro's `html` tagged template literal.
-- To set arbitrary **properties** on an element, use for example `<input data-bind="required=myField">` or `data-bind="style.display=myField"`. Note that these are setting [JavaScript properties, not attributes](https://stackoverflow.com/a/6004028/214446).
+- To set arbitrary **properties** on an element, use for example `<input data-bind="value=myField">` or `data-bind="style.display=myField"`. Note that these are setting [JavaScript properties, not attributes](https://stackoverflow.com/a/6004028/214446).
 - To update a **class**, use `data-bind="class.myCssClass=myField"`. This is a bit special in that it doesn't replace existing classes of the element, but instead toggles the class depending on whether `myField` is truthy or not.
 - To pass a static string to a **nested custom element**, use normal attributes like `<user-info name="Peter"></user-info>`. To pass a signal to a nested custom element, use the special `props` syntax: `<user-info data-bind="props.name=myField"></user-info>`. Because the `user-info` component shouldn't have to care whether the `name` passed is a static string or a signal, both will be automatically assigned as a signal to a field of the nested component, and be uniformly accessible as such (e.g. `this.name()` or `data-bind="name"`).
 - On the right-hand side of the equal sign, you can optionally also **call a method of your class**. See e.g. `data-bind="class.hidden=isNotActiveTab('profile')"` in the tab example above. Arguments are separated by comma, and currently the following types are accepted as arguments: single-quoted strings, booleans `true` and `false`, and numbers.

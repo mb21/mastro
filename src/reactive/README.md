@@ -29,7 +29,7 @@ customElements.define("my-counter", class extends ReactiveElement {
 
 For more examples, see [components/](../../examples/blog/components/), this [Todo list CodePen](https://codepen.io/mb2100/pen/EaYjRvW), or continue reading.
 
-See below for docs on the syntax of the only two attributes you'll have to learn to use Reactive Mastro: [`data-bind`](#whats-the-exact-syntax-for-data-bind) and [`data-on*`](#whats-the-exact-syntax-for-data-on).
+See below for docs on the syntax of the only two attributes you'll have to learn to use Reactive Mastro: [`data-bind`](#data-bind) and [`data-on*`](#data-on).
 
 ## Installation
 
@@ -155,13 +155,17 @@ Besides that, the implementation of Reactive Mastro is just three very small fil
 
 To connect our JavaScript with the right HTML element on the page, we use [custom elements](https://developer.mozilla.org/en-US/docs/Web/API/Web_components/Using_custom_elements). Custom elements are part of the [web components](https://developer.mozilla.org/en-US/docs/Web/API/Web_components) suite of technologies. But when using Reactive Mastro, you don't have to use shadom DOM (which has a lot of gotchas) nor `<template>` elements (which are only useful with shadom DOM).
 
-Using custom elements means the browser handles most of the work for us, such as enabling multiple instances of the same component on the same page and instantiation of nested components as soon as they're in the DOM. You register your custom element once with `window.customElements.define('my-counter', class extends ReactiveElement { })` (the name must start with a lowercase letter and contain a hyphen), and then you can use it wherever in your HTML body, e.g. `<my-counter></my-counter>`. No JavaScript imports nor manually calling a constructor needed.
+Using custom elements means the browser handles most of the work for us, such as enabling multiple instances of the same component on the same page and instantiation of nested components as soon as they're in the DOM.
+
+## Using Reactive Mastro
+
+You register your custom element once with `window.customElements.define('my-counter', class extends ReactiveElement { })` (the name must start with a lowercase letter and contain a hyphen), and then you can use it wherever in your HTML body, e.g. `<my-counter></my-counter>`. No JavaScript imports nor manually calling a constructor needed.
 
 Your class extends Reactive Mastro's `ReactiveElement` class, which in turn extends the browser's `HTMLElement` class. Thus you're almost using plain
-custom elements, and have access to all native callbacks and methods (such as [attaching shadow DOM](https://github.com/mb21/mastro/issues/2)), should you choose to use them. However, what `ReactiveElement` does for you on `connectedCallback` is two things:
+custom elements, and have access to all native callbacks and methods (such as [attaching shadow DOM](https://github.com/mb21/mastro/issues/2)), should you choose to use them. However, what `ReactiveElement` does for you on `connectedCallback`, is two things:
 
-- attach event listeners wherever you use `data-on*` (e.g. `data-onclick`), and
-- bind signals to the DOM wherever you use `data-bind`.
+- attach event listeners to handle your `data-on*` attributes (e.g. `data-onclick`), and
+- bind signals to the DOM elements you put `data-bind` on.
 
 This enables a declarative developer experience (similar to React):
 
@@ -260,35 +264,80 @@ customElements.define("simple-tabs", class extends ReactiveElement {
 Note how we intentially didn't add the `hidden` class in the HTML sent from the server. That way, if client-side JavaScript fails to run, the user sees both tabs and can still access the content. Depending on the layout and position of the element on the page, this might mean that on slow connections, the user first sees both elements before one is hidden once JavaScript executed (try it out by enabling [network throttling](https://developer.mozilla.org/en-US/docs/Glossary/Network_throttling) in your browser's dev tools). If you think that's a bigger problem than sometimes inaccessible content, you can of course also add the `hidden` class already on the server.
 
 
-## FAQ
+## Documentation
 
-### What's the exact syntax for `data-bind`?
+Reactive Mastro requires you to learn only two attributes: `data-bind` and `data-on*`.
 
-The following syntax variations are supported:
+### `data-bind`
 
-- `<div data-bind="myField"></div>` binds the `myField` signal to the **contents** of the div. If the signal contains a plain string, it will be escaped. To insert HTML, use Reactive Mastro's `html` tagged template literal.
-- To set arbitrary **properties** on an element, use for example `<input data-bind="value=myField">` or `data-bind="style.display=myField"`. Note that these are setting [JavaScript properties, not attributes](https://stackoverflow.com/a/6004028/214446).
-- To update a **class**, use `data-bind="class.myCssClass=myField"`. This is a bit special in that it doesn't replace existing classes of the element, but instead toggles the class depending on whether `myField` is truthy or not.
-- To pass a static string to a **nested custom element**, use normal attributes like `<user-info name="Peter"></user-info>`. To pass a signal to a nested custom element, use the special `props` syntax: `<user-info data-bind="props.name=myField"></user-info>`. Because the `user-info` component shouldn't have to care whether the `name` passed is a static string or a signal, both will be automatically assigned as a signal to a field of the nested component, and be uniformly accessible as such (e.g. `this.name()` or `data-bind="name"`).
-- On the right-hand side of the equal sign, you can optionally also **call a method of your class**. See e.g. `data-bind="class.hidden=isNotActiveTab('profile')"` in the tab example above. Arguments are separated by comma, and currently the following types are accepted as arguments: single-quoted strings, booleans `true` and `false`, and numbers.
-- To bind multiple things on the same element, `data-bind` accepts a semicolon-separated list of bindings: `data-bind="myContent; style.color=myColor"`.
+Creates a reactive binding of a signal (or the result of a method call) to a property of the DOM element which you specify the attribute on. The following syntax variations are supported.
 
-### What's the exact syntax for `data-on*`?
+#### Set contents (innerHTML)
+```html
+<div data-bind="myField"></div>
+```
+This binds the `myField` signal to the contents of the div. Normal strings will be properly escaped. To construct an HTML string, use Reactive Mastro's `html` tagged template literal (e.g. ``myField = html`<strong>my text</strong>` ``).
+
+#### Set a property
+```html
+<input data-bind="value=myField">
+or nested properties:
+<div data-bind="style.display=myField"></div>
+```
+This sets arbitrary [JavaScript properties, not attributes](https://stackoverflow.com/a/6004028/214446) on an element.
+
+#### Toggle a class
+```html
+<div data-bind="class.myCssClass=myField"></div>
+```
+This toggles the specified class depending on whether `myField` is truthy or not, leaving other classes on the element untouched.
+
+#### Pass a static attribute to a custom element
+```html
+<user-info name="Peter"></user-info>
+```
+
+#### Pass a signal to a custom element
+```html
+<user-info data-bind="props.name=myField"></user-info>
+```
+This uses the `props.` syntax, which is specific to Reactive Mastro. Because the `user-info` component shouldn't have to care whether the `name` passed is a static string or a signal, both will be automatically assigned as a signal to a field of the nested component, and be uniformly accessible as such (e.g. `this.name()` or `data-bind="name"`).
+
+#### Using a helper method
+```html
+<div data-bind="class.hidden=isNotActiveTab('profile')"></div>
+```
+On the right-hand side of the equal sign, you can call a method of your class. See the tab example above. Arguments are separated by comma, and currently the following types are accepted as arguments: single-quoted strings, booleans `true` and `false`, and numbers.
+
+#### Multiple bindings
+```html
+<div data-bind="myContent; style.color=myColor"></div>
+```
+To bind multiple things on the same element, `data-bind` accepts a semicolon-separated list of bindings.
+
+#### Binding without introducing an extra element
+
+If you want to avoid introducing an extra box in the layout (e.g. when using things like CSS grid or flexbox), you can use the HTML [`slot`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/slot) element: e.g. `<slot data-bind="mySignal"></slot>`. It's still an extra element, but CSS behaves like it isn't there.
+
+### `data-on*`
 
 There are only two variations:
 
-- `<button data-onclick="addTodo">+</button>`, which calls the `addTodo` method on your class on click, and
-- `<button data-onclick="removeTodo(7)">+</button>`, which calls the `removeTodo` method on your class, with `7` as the first argument. The same types are supported as arguments as in `data-bind`.
+```html
+<button data-onclick="addTodo">+</button>
+```
+which calls the `addTodo` method on your class on click, and
+
+```html
+<button data-onclick="removeTodo(7)">+</button>
+```
+which calls the `removeTodo` method on your class, with `7` as the first argument. The same types are supported as arguments as in `data-bind` [method calls](#using-a-helper-method).
 
 In both cases, the actual native [event](https://developer.mozilla.org/en-US/docs/Web/API/Event) is also supplied as an additional last argument.
 
-### How do I bind a signal to the DOM without introducing an extra element?
+#### Adding event listeners for less common events
 
-If you want to avoid introducing an extra box in the layout (e.g. when using things like CSS grid or flex), you can use the HTML [`slot`](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/slot) element: e.g. `<slot data-bind="mySignal"`></slot>`. It's still an extra element, but CSS behaves like it isn't there.
-
-### How do I add event listeners for less common events?
-
-To support events on HTML elements that are added to the DOM after custom element creation (e.g. as the result of a user interaction), Reactive Mastro adds one listener for each common event name (`click`, `change`, `input` and `submit`) to the custom element and lets the event bubble up there. However, you can customize that list:
+To support events on HTML elements that are added to the DOM after custom element creation (e.g. as the result of a user interaction), Reactive Mastro adds one listener for the event names `click`, `change`, `input` and `submit` to the custom element and lets the event bubble up there. However, you can customize that list:
 
 ```js
 customElements.define("my-counter", class extends ReactiveElement {

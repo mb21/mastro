@@ -25,7 +25,12 @@ export const handler: Deno.ServeHandler = async req => {
         const modulePath = Deno.cwd() + '/' + route.filePath
         console.info(`Received ${req.url}, loading ${modulePath}`)
         const { GET } = await import(modulePath)
-        return await GET(req)
+        const res = await GET(req)
+        if (res instanceof Response) {
+          return res
+        } else {
+          throw Error('GET must return a Response object')
+        }
       } else {
         return new Response('404 not found', { status: 404 })
       }
@@ -37,7 +42,7 @@ export const handler: Deno.ServeHandler = async req => {
     if (e.name === 'NotFound' || e.code === 'ERR_MODULE_NOT_FOUND') {
       return new Response('404 not found', { status: 404 })
     } else {
-      return new Response(e.name || 'Unknown error', { status: 500 })
+      return new Response(`500: ${e.name || 'Unknown error'}\n\n${e}`, { status: 500 })
     }
   }
 }

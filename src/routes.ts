@@ -28,14 +28,25 @@ export const scripts = (pattern: string) => {
   )
 }
 
-export const htmlResponse = (body: string | AsyncIterable<string>, status = 200, headers?: HeadersInit): Response =>
-  new Response(isAsyncIterable(body) ? ReadableStream.from(body) : body, {
-    status,
-    headers: {
-      'Content-Type': 'text/html',
-      ...headers,
-    },
-  })
+export const htmlResponse = (
+  body: string | AsyncIterable<string>,
+  status = 200,
+  headers?: HeadersInit,
+): Response => {
+  const encoder = new TextEncoder()
+  const payload = isAsyncIterable(body)
+    ? ReadableStream.from(mapIterable(body, chunk => encoder.encode(chunk)))
+    : body
+  return new Response(
+    payload,
+    {
+      status,
+      headers: {
+        'Content-Type': 'text/html',
+        ...headers,
+      },
+    })
+}
 
 export const jsResponse = (body: string, status = 200, headers?: HeadersInit): Response =>
   new Response(body, {

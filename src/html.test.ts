@@ -1,5 +1,6 @@
 import { assertEquals } from 'jsr:@std/assert'
-import { html, renderToString, unsafeInnerHtml } from './html.ts'
+import { html, renderToStream, renderToString, unsafeInnerHtml } from './html.ts'
+import { htmlResponse } from "./routes.ts";
 
 Deno.test('html escaping', async () => {
   assertEquals(
@@ -71,4 +72,17 @@ Deno.test('html attributes', async () => {
     await renderToString(html`<div ${'required'} ${'foo'}></div><code>x=${7}</code>`),
     '<div required foo></div><code>x=7</code>',
   )
+})
+
+Deno.test('htmlResponse', async () => {
+  const res = htmlResponse(renderToStream('hi'))
+  assertEquals(await res.text(), 'hi')
+
+  const generator = async function* () {
+    yield 'a'
+    yield 'b'
+    yield 'c'
+  }
+  const asyncRes = htmlResponse(renderToStream(html`hi ${generator()}`))
+  assertEquals(await asyncRes.text(), 'hi abc')
 })

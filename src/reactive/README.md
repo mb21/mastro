@@ -27,7 +27,7 @@ customElements.define("my-counter", class extends ReactiveElement {
 })
 ```
 
-For more examples, see [components/](../../examples/blog/components/), this [Todo list CodePen](https://codepen.io/mb2100/pen/EaYjRvW), or continue reading.
+For more examples, see this [Todo list CodePen](https://codepen.io/mb2100/pen/EaYjRvW), [examples/reactive-mastro/](../../examples/reactive-mastro/routes/), or continue reading.
 
 See below for docs on the syntax of the only two attributes you'll have to learn to use Reactive Mastro: [`data-bind`](#data-bind) and [`data-on*`](#data-on).
 
@@ -115,7 +115,7 @@ Here's a complete example that you can save as a `.html` file and open it in you
 If you want the fastest initial page load possible, you will want to send very little JavaScript to the client. For almost all kinds of websites, that means you want a MPA (Multi-Page App). If you need convincing, read Astro's [content-driven and server-first](https://docs.astro.build/en/concepts/why-astro/#content-driven) sections, or Nolan's [the balance has shifted away from SPAs](https://nolanlawson.com/2022/05/21/the-balance-has-shifted-away-from-spas/). Browsers have really stepped up their game regarding MPA page navigations. Two highlights:
 
 - [back-forward cache](https://web.dev/articles/bfcache) is implemented in all modern browsers (meaning e.g. an infinite-loading list added with JavaScript will still be there on browser back navigation)
-- [cross-document view transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API/Using#basic_mpa_view_transition) are implemented in Chrome and the Safari Technology Preview.
+- [cross-document view transitions](https://developer.mozilla.org/en-US/docs/Web/API/View_Transitions_API/Using#basic_mpa_view_transition) are implemented in Chrome and Safari.
 
 ### How does it compare to React, Vue, Solid, Svelte etc?
 

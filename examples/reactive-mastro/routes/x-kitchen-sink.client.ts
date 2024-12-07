@@ -1,16 +1,5 @@
 import { computed, html, ReactiveElement, signal } from 'mastro/reactive'
 
-customElements.define('user-info', class extends ReactiveElement {
-  initialHtml () {
-    return html`
-      <div>Company: ${this.getAttribute('company')}</div>
-      <div>Company: <slot data-bind="company"></slot></div>
-      <div>Name: <slot data-bind="name"></slot></div>
-      <div>Tab name: <slot data-bind="tabName"></slot></div>
-      `
-  }
-})
-
 customElements.define('tab-switch', class extends ReactiveElement {
   userName = signal<string | undefined>(undefined)
   tabName = signal('profile')
@@ -56,5 +45,16 @@ customElements.define('tab-switch', class extends ReactiveElement {
 
   switchTo (tabName: string) {
     this.tabName.set(tabName)
+  }
+})
+
+customElements.define('user-info', class extends ReactiveElement {
+  initialHtml () {
+    return html`
+      <div>Company: ${this.getAttribute('company')}</div>
+      <div>Company: <slot data-bind="company"></slot></div>
+      <div>Name: <slot data-bind="name"></slot></div>
+      <div>Tab name: <slot data-bind="tabName"></slot></div>
+      `
   }
 })

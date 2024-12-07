@@ -15,6 +15,7 @@ export const Layout = (props: Props) => html`
       <title>${props.title}</title>
       ${importMap()}
       ${scripts('components/**/*.client.ts')}
+      <link rel="icon" href=${favicon}>
     </head>
     <body>
       ${Menu()}
@@ -22,3 +23,9 @@ export const Layout = (props: Props) => html`
     </body>
   </html>
   `
+
+const favicon = 'data:image/svg+xml,' + encodeURI([
+  "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>",
+  "<text y='.9em' font-size='90'>👨‍🍳</text>",
+  "</svg>"
+].join(""))

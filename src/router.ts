@@ -4,15 +4,15 @@ const pathSegments = []
 for await (const file of walk('routes')) {
   if (file.isFile && !file.isSymlink && file.name.endsWith('.ts')) {
     const segments = file.path.split('/').slice(1).map(segment => {
-      const matches = segment.match(/^\[([a-zA-Z0-9]+)\]\.ts$/)
+      const matches = segment.match(/^\[([a-zA-Z0-9]+)\]\.server\.ts$/)
       if (matches?.[1]) {
         // `[slug].ts` -> `:slug`
         const param = matches[1]
         return ':' + param
-      } else if (segment === 'index.ts') {
+      } else if (segment === 'index.server.ts') {
         return
-      } else if (segment.endsWith('.ts')) {
-        return segment.slice(0, -3)
+      } else if (segment.endsWith('.server.ts')) {
+        return segment.slice(0, -10)
       } else {
         return segment
       }

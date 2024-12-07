@@ -1,10 +1,7 @@
-import { Counter } from '../components/Counter.server.ts'
-import { TodoList } from '../components/TodoList/TodoList.server.ts'
 import { Layout } from '../components/layout/Layout.ts'
 import { html, renderToString } from 'mastro/html.ts'
 import { htmlResponse } from 'mastro/routes.ts'
 import { getPosts } from '../models/posts.ts'
-import { SimpleTabs } from "../components/SimpleTabs.server.ts"
 
 export const GET = async (): Promise<Response> => {
   const posts = await getPosts()
@@ -19,30 +16,12 @@ export const GET = async (): Promise<Response> => {
             <p><a href=${post.slug + '.html' }>${post.data.title}</a></p>
           `)}
 
-          <h2>Client-initialized Counter</h2>
-          <my-counter></my-counter>
-
-          <h2>Server-initialized Counter</h2>
-          ${Counter()}
-
-          <h2>Todo list</h2>
-          ${TodoList()}
-
-          <h2>Simple Tabs</h2>
-          ${SimpleTabs()}
-
-          <h2>Tab-Switch</h2>
-          <tab-switch></tab-switch>
-
           <style>
             html {
               font-family: sans-serif;
             }
             h2 {
               margin-top: 2em;
-            }
-            .hidden {
-              display: none;
             }
           </style>
           `

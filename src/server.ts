@@ -8,8 +8,9 @@ export const handler: Deno.ServeHandler = async req => {
   const { pathname } = url
 
   try {
-    if (pathname.startsWith('/components/') && pathname.endsWith('.client.ts')) {
-      const text = await Deno.readTextFile(pathname.slice(1))
+    if (pathname.endsWith('.client.ts')) {
+      const prefix = pathname.startsWith('/components/') ? '' : 'routes/'
+      const text = await Deno.readTextFile(prefix + pathname.slice(1))
       return jsResponse(tsBlankSpace(text))
     } else if (pathname.startsWith('/client/mastro/')) {
       const filePath = import.meta.resolve(pathname.slice('/client/'.length)).slice('file://'.length)
@@ -39,7 +40,7 @@ export const handler: Deno.ServeHandler = async req => {
     if (pathname !== '/favicon.ico') {
       console.warn(e)
     }
-    if (e.name === 'NotFound' || e.code === 'ERR_MODULE_NOT_FOUND') {
+    if (e.name === 'NotFound') {
       return new Response('404 not found', { status: 404 })
     } else {
       return new Response(`500: ${e.name || 'Unknown error'}\n\n${e}`, { status: 500 })

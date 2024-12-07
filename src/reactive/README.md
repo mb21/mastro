@@ -27,7 +27,7 @@ customElements.define("my-counter", class extends ReactiveElement {
 })
 ```
 
-For more examples, see [components/](../../examples/blog/components/), this [Todo list CodePen](https://codepen.io/mb2100/pen/EaYjRvW), or continue reading.
+For more examples, see this [Todo list CodePen](https://codepen.io/mb2100/pen/EaYjRvW), [examples/reactive-mastro/](../../examples/reactive-mastro/routes/), or continue reading.
 
 See below for docs on the syntax of the only two attributes you'll have to learn to use Reactive Mastro: [`data-bind`](#data-bind) and [`data-on*`](#data-on).
 

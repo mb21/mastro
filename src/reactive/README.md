@@ -263,6 +263,49 @@ customElements.define("simple-tabs", class extends ReactiveElement {
 
 Note how we intentially didn't add the `hidden` class in the HTML sent from the server. That way, if client-side JavaScript fails to run, the user sees both tabs and can still access the content. Depending on the layout and position of the element on the page, this might mean that on slow connections, the user first sees both elements before one is hidden once JavaScript executed (try it out by enabling [network throttling](https://developer.mozilla.org/en-US/docs/Glossary/Network_throttling) in your browser's dev tools). If you think that's a bigger problem than sometimes inaccessible content, you can of course also add the `hidden` class already on the server.
 
+### Initializing state from the server
+
+As we've seen in the previous examples, the canonical version of state lives in the signals. Since signals are normal JavaScript objects (like e.g. Promises), they can be shared between components, even if the components are different islands and otherwise not connected.
+
+Often, you need to initialize some state not with a simple static value (like `0` in the counter example), but with a dynamic value from the server (for example a user object, or an array of todo items from the database). If you embed the JavaScript dynamically on the HTML page anyway, then you can just include that data as a variable. If your JavaScript is in a static file however, there are a few different strategies.
+
+Primitive values like strings are best put on attributes, like in the counter above:
+
+```html
+<my-counter start="7"></my-counter>
+```
+
+```js
+class extends ReactiveElement {
+  count = signal(parseInt(this.getAttribute("start") || "0", 10))
+```
+
+This works also for more complex values that are serializable as JSON:
+
+```html
+<my-profile user=${JSON.serialize(user)}></my-profile>
+```
+
+```js
+class extends ReactiveElement {
+  user = signal(JSON.parse(this.getAttribute("user")))
+```
+
+If you're server-rendering the data to HTML anyway, instead of duplicating the data in JSON, you can of course also parse the HTML. Depending on the structure of the data and the HTML serialization, this may of course be a bit more involved than the following simple example:
+
+```html
+<name-list>
+  <ul>
+    ${names.map(name => html`<li>${name}</li>`}
+  </ul>
+</name-list>
+```
+
+```js
+class extends ReactiveElement {
+  names = signal(Array.from(this.querySelectorAll('li')).map(el => el.innerText))
+```
+
 
 ## Documentation
 

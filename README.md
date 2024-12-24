@@ -6,33 +6,36 @@ A *m*inimal take on an [*Astro*](https://astro.build)-like MPA web framework.
 
 ## Philosophy
 
-- No magic. Easy to understand codebase using simple JS functions wherever possible. Favour small, [composable functions](https://mb21.github.io/blog/2021/09/11/composable-abstractions.html).
+- No magic. Nothing is auto-injected into your page.
 
-- Zero client-side JavaScript by default.
-
-- No build step or bundler by default.
+- Zero client-side JavaScript by default: extremely fast page loads by leveraging native browser functionality instead of reinventing the wheel in JavaScript. See [Reactive Mastro's motivation](src/reactive#motivation) for more info.
 
 - Minimal dependencies (see `deno.json`)
 
-- File-based routing: `routes/` contains files with handler functions and that's the only way. No `.md` files with `layout` frontmatter property, no `.astro`-like-frontmatter-magic, no `.html` files, etc.
+- No build step or bundler by default (meaning changes during development are instant, and you can debug in the browser).
 
-- JSON and HTML [route handlers](https://blog.val.town/blog/the-api-we-forgot-to-name/) are uniform. A handler takes a `Request` object (and no props, and hopefully no context).
+- While some frameworks try to erase the boundary between client and server (by putting a leaky abstraction on top), Mastro makes it explicit which parts of your app run where and when.
+
+- File-based routing: `pages/` contains files that are served verbatim, as well as [route handlers](https://blog.val.town/blog/the-api-we-forgot-to-name/). A handler always takes a `Request` object (and no props, and hopefully no context) and returns a `Response` object.
 
 - Server components are simple JS functions that by convention take a props object.
 
 - For client-side components, see [Reactive Mastro](src/reactive/).
 
+- Easy to understand codebase using simple JS functions wherever possible. Favour small, [composable functions](https://mb21.github.io/blog/2021/09/11/composable-abstractions.html).
+
+
 ## How to run
 
-`cd examples/blog/`
+For example `cd examples/blog/`, then:
 
-Start dev server:
+Start the development server:
 
-    deno run start
+    deno task start
 
-Generate static site:
+Generate the static site:
 
-    deno run generate
+    deno task generate
 
 
 ## TODOs

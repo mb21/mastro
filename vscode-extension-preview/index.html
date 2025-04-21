@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <script type="importmap">
+      {
+        "imports": {
+          "mastro/": "/mastro/"
+        }
+      }
+    </script>
+    <script type="module">
+      import { connectDb, putDb } from './db.js'
+      await connectDb()
+
+      window.addEventListener("message", event => {
+        putDb(event.data.fileName, event.data.text)
+      })
+
+      if ('serviceWorker' in navigator) {
+        try {
+          const registration = await navigator.serviceWorker.register('sw.js', { type: 'module'})
+          if (registration.installing) {
+            console.log('Service worker installing')
+          } else if (registration.waiting) {
+            console.log('Service worker installed')
+          } else if (registration.active) {
+            console.log('Service worker active')
+          }
+        } catch (error) {
+          document.body.innerHTML = `Registration failed with ${error}`
+        }
+
+        if (!navigator.serviceWorker.controller) {
+          // if serviceWorker is not yet controlling our page, we cannot continue
+          document.location.reload()
+        }
+
+        try {
+          const { GET } = await import("/routes/index.server.js")
+
+          document.body.innerHTML = await GET().text()
+        } catch (e) {
+          document.body.innerHTML = `Failed to render site ${e}`
+        }
+      } else {
+        document.body.innerHTML = `Service workers not supported in this browser or incognito mode`
+      }
+
+    </script>
+  </head>
+  <body>
+    Loading...
+  </body>
+</html>

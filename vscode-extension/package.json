@@ -26,12 +26,14 @@
   "scripts": {
     "open-in-browser": "vscode-test-web --extensionDevelopmentPath=. ../examples/blog/",
     "vscode:prepublish": "npm run build",
-    "build": "tsc -p ./",
-    "watch": "tsc -watch -p ./"
+    "tsc": "tsc --noEmit",
+    "build": "npm run tsc && esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --target=esnext",
+    "build-preview": "tsc ../src/*.ts --outDir ../vscode-extension-preview/mastro"
   },
   "devDependencies": {
     "@types/vscode": "^1.96.0",
     "@vscode/test-web": "*",
+    "esbuild": "^0.25.2",
     "typescript": "^5.7.2"
   },
   "volta": {

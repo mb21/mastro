@@ -18,6 +18,13 @@
       })
 
       if ('serviceWorker' in navigator) {
+        const controlledPromise = new Promise(resolve => {
+          if (navigator.serviceWorker.controller) {
+            resolve()
+          } else {
+            navigator.serviceWorker.addEventListener('controllerchange', resolve)
+          }
+        })
         try {
           const registration = await navigator.serviceWorker.register('sw.js', { type: 'module'})
           if (registration.installing) {
@@ -33,8 +40,12 @@
 
         if (!navigator.serviceWorker.controller) {
           // if serviceWorker is not yet controlling our page, we cannot continue
-          document.location.reload()
+          // console.log('gonna reload')
+          // setTimeout(() => document.location.reload(), 2000)
         }
+
+        await controlledPromise
+        console.log('resolved')
 
         try {
           const { GET } = await import("/routes/index.server.js")

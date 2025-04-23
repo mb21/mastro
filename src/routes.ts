@@ -1,6 +1,6 @@
 import { expandGlob } from '@std/fs'
 
-import { html, unsafeInnerHtml } from './html.ts'
+import { Html, html, renderToString, unsafeInnerHtml } from './html.ts'
 
 export const importMap = async () => {
   const denoImports = JSON.parse(await Deno.readTextFile('deno.json')).imports as Record<string, string>
@@ -47,6 +47,9 @@ export const htmlResponse = (
       },
     })
 }
+
+export const htmlToResponse = async (node: Html): Promise<Response> =>
+  htmlResponse(await renderToString(node))
 
 export const jsResponse = (body: string, status = 200, headers?: HeadersInit): Response =>
   new Response(body, {

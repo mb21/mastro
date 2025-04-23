@@ -17,7 +17,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
           enableScripts: true,
         }
       )
-      webview.html = await getWebviewContent(webview)
+      webview.html = await getWebviewContent(webview, context)
 
       // vscode.workspace.onDidSaveTextDocument(e => {
       //   sendFile(webview, e.fileName, e.getText())
@@ -32,7 +32,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
   )
 }
 
-const getWebviewContent = async (webview: vscode.Webview) => {
+const getWebviewContent = async (webview: vscode.Webview, context: vscode.ExtensionContext) => {
   return `<!DOCTYPE html>
     <html lang="en">
       <head>
@@ -41,26 +41,59 @@ const getWebviewContent = async (webview: vscode.Webview) => {
         <title></title>
 
         <script type="importmap">
-          {
-            "imports":
-              ${JSON.stringify((await vscode.workspace.findFiles('**/*.*')).reduce((acc, uri) => {
-                acc[uri.path] = webview.asWebviewUri(uri).toString()
-                return acc
-              }, {"mastro/": "/mastro/"} as Record<string, string>))}
-          }
+          ${await getImportMap(webview, context)}
         </script>
 
+        <!--
+          we need to keep the following script inline, because with asWebviewUri,
+          it will be on a different origin, and then the importmap doesn't apply anymore.
+        -->
         <script type="module">
           try {
             const { GET } = await import("/routes/index.server.js")
-            document.body.innerHTML = await GET().text()
+            const output = await (await GET()).text()
+
+            document.body.innerHTML = ''
+            const iframe = document.createElement('iframe')
+            document.body.append(iframe)
+            iframe.contentDocument.body.innerHTML = output
           } catch (e) {
-            document.body.innerHTML = 'Failed to render site ' + e
+            console.error(e)
+            document.body.innerHTML = '<p>Failed to render site: ' + e +
+              '</p><pre>' + e.stack + '</pre>'
           }
         </script>
+        <style>
+          html, body {
+            padding: 0;
+            max-height: 100%;
+          }
+          iframe {
+            border: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+          }
+        </style>
       </head>
       <body>
       </body>
     </html>
     `
+}
+
+const getImportMap = async (webview: vscode.Webview, context: vscode.ExtensionContext) => {
+  const imports = {} as Record<string, string>
+  for (const uri of await vscode.workspace.findFiles('**/*.*')) {
+    if (uri.path.endsWith('.js')) {
+      imports[uri.path] = webview.asWebviewUri(uri).toString()
+    } else {
+      // TODO: CSS etc.
+    }
+  }
+  for (const fileName of ['fs.js', 'generate.js', 'html.js', 'router.js', 'routes.js', 'server.js']) {
+    const uri = vscode.Uri.joinPath(context.extensionUri, 'mastro', fileName)
+    imports['mastro/' + fileName] = webview.asWebviewUri(uri).toString()
+  }
+  return JSON.stringify({ imports })
 }

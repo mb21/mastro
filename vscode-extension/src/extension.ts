@@ -1,12 +1,6 @@
 import * as vscode from 'vscode'
 
-/**
- * prevent tsc from transpiling dynamic import to require
- * (cannot change tsconfig because vscode extensions only support CJS modules)
- */
-const dynamicImport = new Function('specifier', 'return import(specifier)');
-
-export const activate = (context: vscode.ExtensionContext) => {
+export const activate = async (context: vscode.ExtensionContext) => {
   context.subscriptions.push(
     vscode.commands.registerCommand('mastro.start', async () => {
       const rootFolder = vscode.workspace.workspaceFolders?.[0]?.uri
@@ -15,37 +9,7 @@ export const activate = (context: vscode.ExtensionContext) => {
         return
       }
 
-      // console.log('DedicatedWorkerGlobalScope', self instanceof DedicatedWorkerGlobalScope)
-      try {
-        // http://localhost:3000/static/mount/server.ts and similar are available on the
-        // dev server, but not on vscode.dev or github.dev
-        // where it's using the GitHub REST API to get the file contents
-        // see https://code.visualstudio.com/api/extension-guides/web-extensions#web-extension-main-file
-        const x = await dynamicImport('../../../../../../mount/server.js')
-        console.log('x', await x.handler())
-
-        // see https://stackoverflow.com/questions/47978809/how-to-dynamically-execute-eval-javascript-code-that-contains-an-es6-module-re
-        // see https://github.com/microsoft/vscode/issues/194751
-        /*
-        ### extension.js WebWorker
-
-        - loads ts files with `vscode.workspace.workspaceFolders` -> ts-blank-space -> js files
-
-        ### WebView
-
-        - `vscode.window.createWebviewPanel()` apparently cannot load external urls directly
-
-        ### iframe
-
-        */
-      } catch (e) {
-        console.log('caught', e)
-      }
-
-      // const file = await readTextFile(vscode.Uri.joinPath(rootFolder, 'server.ts'))
-      // console.log('handler', typeof handler)
-
-      const panel = vscode.window.createWebviewPanel(
+      const { webview } = vscode.window.createWebviewPanel(
         'mastro',
         'Mastro dev server',
         vscode.ViewColumn.Two,
@@ -53,25 +17,50 @@ export const activate = (context: vscode.ExtensionContext) => {
           enableScripts: true,
         }
       )
-      panel.webview.html = getWebviewContent()
+      webview.html = await getWebviewContent(webview)
+
+      // vscode.workspace.onDidSaveTextDocument(e => {
+      //   sendFile(webview, e.fileName, e.getText())
+      // })
+
+      // // TODO: should we use vscode.workspace.workspaceFolders instead?
+      // for (const uri of await vscode.workspace.findFiles('**/*.*')) {
+      //   sendFile(webview, uri.path, await readTextFile(uri))
+      // }
+
     })
   )
 }
 
-const getWebviewContent = () => {
+const getWebviewContent = async (webview: vscode.Webview) => {
   return `<!DOCTYPE html>
     <html lang="en">
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title></title>
-    </head>
-    <body>
-    Hi
-    </body>
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title></title>
+
+        <script type="importmap">
+          {
+            "imports":
+              ${JSON.stringify((await vscode.workspace.findFiles('**/*.*')).reduce((acc, uri) => {
+                acc[uri.path] = webview.asWebviewUri(uri).toString()
+                return acc
+              }, {"mastro/": "/mastro/"} as Record<string, string>))}
+          }
+        </script>
+
+        <script type="module">
+          try {
+            const { GET } = await import("/routes/index.server.js")
+            document.body.innerHTML = await GET().text()
+          } catch (e) {
+            document.body.innerHTML = 'Failed to render site ' + e
+          }
+        </script>
+      </head>
+      <body>
+      </body>
     </html>
     `
 }
-
-const readTextFile = async (uri: vscode.Uri): Promise<string> =>
-  new TextDecoder().decode(await vscode.workspace.fs.readFile(uri))

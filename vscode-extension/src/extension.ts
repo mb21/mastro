@@ -49,24 +49,76 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
           it will be on a different origin, and then the importmap doesn't apply anymore.
         -->
         <script type="module">
-          try {
-            const { GET } = await import("/routes/index.server.js")
-            const output = await (await GET()).text()
+          const backBtn = document.getElementById("backBtn")
+          const pathInput = document.getElementById("pathInput")
+          const history = []
+          const iframe = document.createElement("iframe")
+          document.body.append(iframe)
 
-            document.body.innerHTML = ''
-            const iframe = document.createElement('iframe')
-            document.body.append(iframe)
-            iframe.contentDocument.body.innerHTML = output
-          } catch (e) {
-            console.error(e)
-            document.body.innerHTML = '<p>Failed to render site: ' + e +
-              '</p><pre>' + e.stack + '</pre>'
+          // TODO: import proper implementation from mastro
+          const matchRoute = path => {
+            const p = path === "/" ? "/index" : path
+            return { filePath: "/routes" + p + ".server.js" }
           }
+
+          const render = async (path) => {
+            console.log('rendering ', path)
+            pathInput.value = path
+            backBtn.disabled = history.length < 1
+            history.push(path)
+            try {
+              const route = matchRoute(path)
+              const { GET } = await import(route.filePath)
+              const output = await (await GET()).text()
+
+              iframe.contentDocument.body.innerHTML = output
+            } catch (e) {
+              console.error(e)
+              iframe.contentDocument.body.innerHTML = '<p>Failed to render site: ' + e + '</p>'
+            }
+          }
+
+          iframe.contentWindow.addEventListener("beforeunload", event => {
+            const path = URL.parse(
+              iframe.contentDocument.activeElement.getAttribute("href"),
+              "http://localhost" + pathInput.value,
+            )?.pathname
+            console.log('beforeunload', path)
+            if (path) {
+              event.preventDefault() // seems to have no effect, see https://stackoverflow.com/questions/64460516/
+              setTimeout(() => render(path), 100)
+            }
+          })
+
+          render("/")
+
+          document.querySelector("form").addEventListener("submit", e => {
+            e.preventDefault()
+            render(pathInput.value || "/")
+          })
+          backBtn.addEventListener("click", e => {
+            history.pop()
+            render(history.pop())
+          })
         </script>
+
         <style>
-          html, body {
+          html {
+            height: 100%;
+          }
+          body {
             padding: 0;
-            max-height: 100%;
+            min-height: 100%;
+          }
+          form {
+            margin: 0 1em;
+          }
+          input {
+            background-color: transparent;
+            color: var(--vscode-editor-foreground);
+            font-family: var(--vscode-font-family);
+            font-weight: var(--vscode-font-weight);
+            font-size: var(--vscode-font-size);
           }
           iframe {
             border: 0;
@@ -77,6 +129,10 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
         </style>
       </head>
       <body>
+        <form>
+          <button id="backBtn" type="button" disabled>←</button>
+          <input id="pathInput">
+        </form>
       </body>
     </html>
     `

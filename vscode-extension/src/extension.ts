@@ -9,7 +9,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
         return
       }
 
-      const { webview } = vscode.window.createWebviewPanel(
+      const panel = vscode.window.createWebviewPanel(
         'mastro',
         'Mastro dev server',
         vscode.ViewColumn.Two,
@@ -17,22 +17,38 @@ export const activate = async (context: vscode.ExtensionContext) => {
           enableScripts: true,
         }
       )
-      webview.html = await getWebviewContent(webview, context)
+      const { webview } = panel
 
-      // vscode.workspace.onDidSaveTextDocument(e => {
-      //   sendFile(webview, e.fileName, e.getText())
-      // })
+      const history: string[] = []
+      webview.html = await getWebviewContent(webview, context, history)
+      webview.onDidReceiveMessage(msg => {
+        switch (msg.type) {
+          case "pushHistory": {
+            history.push(msg.path)
+            return
+          }
+          case "popHistoryTwice": {
+            history.pop()
+            history.pop()
+            return
+          }
+        }
+      })
 
-      // // TODO: should we use vscode.workspace.workspaceFolders instead?
-      // for (const uri of await vscode.workspace.findFiles('**/*.*')) {
-      //   sendFile(webview, uri.path, await readTextFile(uri))
-      // }
+      const disposables: vscode.Disposable[] = []
 
+      vscode.workspace.onDidSaveTextDocument(async e => {
+        const html = await getWebviewContent(webview, context, history)
+        webview.html = ''
+        webview.html = html
+      }, this, disposables)
+
+      panel.onDidDispose(() => disposables.forEach(d => d.dispose()))
     })
   )
 }
 
-const getWebviewContent = async (webview: vscode.Webview, context: vscode.ExtensionContext) => {
+const getWebviewContent = async (webview: vscode.Webview, context: vscode.ExtensionContext, history: string[]) => {
   return `<!DOCTYPE html>
     <html lang="en">
       <head>
@@ -49,9 +65,10 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
           it will be on a different origin, and then the importmap doesn't apply anymore.
         -->
         <script type="module">
+          const vscode = acquireVsCodeApi()
           const backBtn = document.getElementById("backBtn")
           const pathInput = document.getElementById("pathInput")
-          const history = []
+          const history = ${JSON.stringify(history)}
           const iframe = document.querySelector("iframe")
 
           // TODO: import proper implementation from mastro
@@ -62,6 +79,10 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
 
           const render = async (path) => {
             console.log('rendering ', path)
+            vscode.postMessage({
+              type: "pushHistory",
+              path,
+            })
             pathInput.value = path
             backBtn.disabled = history.length < 1
             history.push(path)
@@ -93,7 +114,7 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
             }
           })
 
-          render("/")
+          render("${history.at(-1) || '/'}")
 
           document.querySelector("form").addEventListener("submit", e => {
             e.preventDefault()
@@ -102,6 +123,9 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
           backBtn.addEventListener("click", e => {
             history.pop()
             render(history.pop())
+            vscode.postMessage({
+              type: "popHistoryTwice",
+            })
           })
         </script>
 

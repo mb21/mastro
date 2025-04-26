@@ -52,8 +52,7 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
           const backBtn = document.getElementById("backBtn")
           const pathInput = document.getElementById("pathInput")
           const history = []
-          const iframe = document.createElement("iframe")
-          document.body.append(iframe)
+          const iframe = document.querySelector("iframe")
 
           // TODO: import proper implementation from mastro
           const matchRoute = path => {
@@ -71,21 +70,25 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
               const { GET } = await import(route.filePath)
               const output = await (await GET()).text()
 
-              iframe.contentDocument.body.innerHTML = output
+              // following hack tells parent window when a link was clicked or similar
+              const [x, y] = output.split("</head>")
+              const output2 = x +
+                '<script' + '>window.addEventListener("unload", () => window.parent.postMessage({ type: "navigate", target: document.activeElement.getAttribute("href") }, "*"))</script' + '>' +
+                "</head>" + y
+
+              iframe.srcdoc = output2
             } catch (e) {
               console.error(e)
               iframe.contentDocument.body.innerHTML = '<p>Failed to render site: ' + e + '</p>'
             }
           }
 
-          iframe.contentWindow.addEventListener("unload", event => {
-            const target = iframe.contentDocument.activeElement.getAttribute("href")
-            if (target) {
-              const path = URL.parse(target, "http://localhost" + pathInput.value)?.pathname
-              console.log('beforeunload', path)
+          window.addEventListener("message", event => {
+            const { data } = event
+            if (data.type === "navigate" && data.target) {
+              const path = URL.parse(data.target, "http://localhost" + pathInput.value)?.pathname
               if (path) {
-                event.preventDefault() // seems to have no effect, see https://stackoverflow.com/questions/64460516/
-                setTimeout(() => render(path), 100)
+                render(path)
               }
             }
           })
@@ -133,6 +136,7 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
           <button id="backBtn" type="button" disabled>←</button>
           <input id="pathInput">
         </form>
+        <iframe sandbox="allow-modals allow-scripts">
       </body>
     </html>
     `

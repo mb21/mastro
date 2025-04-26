@@ -78,15 +78,15 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
             }
           }
 
-          iframe.contentWindow.addEventListener("beforeunload", event => {
-            const path = URL.parse(
-              iframe.contentDocument.activeElement.getAttribute("href"),
-              "http://localhost" + pathInput.value,
-            )?.pathname
-            console.log('beforeunload', path)
-            if (path) {
-              event.preventDefault() // seems to have no effect, see https://stackoverflow.com/questions/64460516/
-              setTimeout(() => render(path), 100)
+          iframe.contentWindow.addEventListener("unload", event => {
+            const target = iframe.contentDocument.activeElement.getAttribute("href")
+            if (target) {
+              const path = URL.parse(target, "http://localhost" + pathInput.value)?.pathname
+              console.log('beforeunload', path)
+              if (path) {
+                event.preventDefault() // seems to have no effect, see https://stackoverflow.com/questions/64460516/
+                setTimeout(() => render(path), 100)
+              }
             }
           })
 

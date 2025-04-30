@@ -1,4 +1,5 @@
 import * as vscode from 'vscode'
+import { posix } from 'node:path'
 
 export const activate = async (context: vscode.ExtensionContext) => {
   context.subscriptions.push(
@@ -21,7 +22,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
 
       const history: string[] = []
       webview.html = await getWebviewContent(webview, context, history)
-      webview.onDidReceiveMessage(msg => {
+      webview.onDidReceiveMessage(async msg => {
         switch (msg.type) {
           case "pushHistory": {
             history.push(msg.path)
@@ -30,6 +31,30 @@ export const activate = async (context: vscode.ExtensionContext) => {
           case "popHistoryTwice": {
             history.pop()
             history.pop()
+            return
+          }
+          case "readDir": {
+            const { path, requestId } = msg
+            try {
+              const entries = await vscode.workspace.fs.readDirectory(rootFolder.with({ path }))
+              const response = entries.flatMap(([name, type]) =>
+                type === vscode.FileType.File ? name : []
+              )
+              webview.postMessage({ type: 'success', response, requestId })
+            } catch (e) {
+              webview.postMessage({ type: 'error', response: e, requestId })
+            }
+            return
+          }
+          case "readTextFile": {
+            const { path, requestId } = msg
+            try {
+              const bs = await vscode.workspace.fs.readFile(rootFolder.with({ path }))
+              const response = new TextDecoder().decode(bs)
+              webview.postMessage({ type: 'success', response, requestId })
+            } catch (e) {
+              webview.postMessage({ type: 'error', response: e, requestId })
+            }
             return
           }
         }
@@ -61,11 +86,32 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
         </script>
 
         <!--
-          we need to keep the following script inline, because with asWebviewUri,
-          it will be on a different origin, and then the importmap doesn't apply anymore.
+          we need to keep the following script inline, because with asWebviewUri, it
+          would be on a different origin, and then the importmap wouldn't apply anymore.
         -->
         <script type="module">
           const vscode = acquireVsCodeApi()
+
+          const postMessageAndAwaitAnswer = msg =>
+            new Promise((resolve, reject) => {
+              const requestId = crypto.randomUUID()
+              window.addEventListener("message", event => {
+                const { data } = event
+                if (data?.requestId === requestId) {
+                  if (data.type === "success") {
+                    resolve(data.response)
+                  } else {
+                    reject(data.response)
+                  }
+                }
+              })
+              vscode.postMessage({ ...msg, requestId })
+            })
+          window.fs = {
+            readDir: path => postMessageAndAwaitAnswer({ type: "readDir", path }),
+            readTextFile: path => postMessageAndAwaitAnswer({ type: "readTextFile", path }),
+          }
+
           const backBtn = document.getElementById("backBtn")
           const pathInput = document.getElementById("pathInput")
           const history = ${JSON.stringify(history)}
@@ -149,7 +195,7 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
           }
           iframe {
             border: 0;
-            height: 100%;
+            height: calc(100vh - 25px);
             width: 100%;
             overflow: hidden;
           }

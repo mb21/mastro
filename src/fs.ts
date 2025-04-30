@@ -1,26 +1,31 @@
-// import type * as Vscode from 'npm:@types/vscode' // doesn't seem to work
-import * as fs from 'node:fs/promises'
+const fs = typeof window === 'object'
+  ? undefined
+  : await import('node:fs/promises')
 
-// see https://code.visualstudio.com/api/references/vscode-api#FileSystem
-// and https://github.com/microsoft/vscode-extension-samples/tree/main/fsconsumer-sample
-const vscode = typeof require === 'function'
-  ? require('vscode' as any)
+const vscodeExtensionFs = typeof window === 'object'
+// deno-lint-ignore no-explicit-any
+  ? (window as any).fs
   : undefined
 
 /**
  * Reads the directory and lists its files non-recursively and ignoring symlinks.
  */
-export const readDir = async (path: string): Promise<string[]> =>
-  vscode
-    ? (await vscode.workspace.fs.readDir(vscode.URI.file(path)))
-        .flatMap(([name, type]) => type === vscode.FileType.File && type !== vscode.FilteType.SymbolicLink // TODO: check this
-          ? name
-          : []
-        )
-    : (await fs.readdir(path, { withFileTypes: true }))
+export const readDir = async (path: string): Promise<string[]> => {
+  path = ensureSlash(path)
+  return fs
+    ? (await fs.readdir('.' + path, { withFileTypes: true }))
         .flatMap(file => file.isSymbolicLink() || file.isDirectory() ? [] : file.name)
+    : vscodeExtensionFs.readDir(path)
+}
 
-export const readTextFile = async (path: string): Promise<string> =>
-  vscode
-    ? new TextDecoder().decode(await vscode.workspace.fs.readFile(vscode.URI.file(path)))
-    : fs.readFile(path, { encoding: 'utf8' })
+export const readTextFile = (path: string): Promise<string> => {
+  path = ensureSlash(path)
+  return fs
+    ? fs.readFile('.' + path, { encoding: 'utf8' })
+    : vscodeExtensionFs.readTextFile(path)
+}
+
+const ensureSlash = (path: string) =>
+  path.startsWith('/')
+    ? path
+    : '/' + path

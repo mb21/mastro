@@ -1,5 +1,4 @@
-// import { expandGlob } from '@std/fs'
-
+import { findFiles } from './fs.ts'
 import { Html, html, renderToString, unsafeInnerHtml } from './html.ts'
 
 export const importMap = async () => {
@@ -19,12 +18,11 @@ export const importMap = async () => {
     `
 }
 
-export const scripts = (pattern: string) => {
+export const scripts = async (pattern: string) => {
   const prefixLength = Deno.cwd().length
-  return mapIterable(
-    expandGlob(pattern),
-    entry => html`
-      <script type="module" src=${entry.path.slice(prefixLength)}></script>`,
+  const files = await findFiles(pattern)
+  return files.map(filePath =>
+    html`<script type="module" src=${filePath.slice(prefixLength)}></script>`
   )
 }
 

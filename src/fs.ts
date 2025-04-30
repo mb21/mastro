@@ -25,6 +25,33 @@ export const readTextFile = (path: string): Promise<string> => {
     : vscodeExtensionFs.readTextFile(path)
 }
 
+/**
+ * Expands glob patterns like `*` and `**` and returns the matching file paths.
+ *
+ * Patterns supported currently depends on platform:
+ *
+ * - VSCode for the Web: [Glob Pattern](https://code.visualstudio.com/api/references/vscode-api#GlobPattern)
+ * - Deno: [expandGlob](https://jsr.io/@std/fs/doc/expand-glob/~/expandGlob)
+ */
+export const findFiles = async (pattern: string): Promise<string[]> => {
+  pattern = pattern.startsWith('/')
+    ? pattern.slice(1)
+    : pattern
+  if (typeof window === 'object') {
+    return vscodeExtensionFs.findFiles(pattern)
+  } else {
+    const { expandGlob } = await import('@std/fs')
+    const paths = []
+    for await (const file of expandGlob(pattern)) {
+      if (file.isFile && !file.isSymlink) {
+        const relativeToProjectRoot = file.path.slice(Deno.cwd().length + 1)
+        paths.push(relativeToProjectRoot)
+      }
+    }
+    return paths
+  }
+}
+
 const ensureSlash = (path: string) =>
   path.startsWith('/')
     ? path

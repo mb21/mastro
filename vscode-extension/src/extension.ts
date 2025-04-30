@@ -33,6 +33,15 @@ export const activate = async (context: vscode.ExtensionContext) => {
             history.pop()
             return
           }
+          case "findFiles": {
+            const { pattern, requestId } = msg
+            const response = []
+            for (const uri of await vscode.workspace.findFiles(pattern)) {
+              response.push(uri.path)
+            }
+            webview.postMessage({ type: 'success', response, requestId })
+            return
+          }
           case "readDir": {
             const { path, requestId } = msg
             try {
@@ -108,6 +117,7 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
               vscode.postMessage({ ...msg, requestId })
             })
           window.fs = {
+            findFiles: pattern => postMessageAndAwaitAnswer({ type: "findFiles", pattern }),
             readDir: path => postMessageAndAwaitAnswer({ type: "readDir", path }),
             readTextFile: path => postMessageAndAwaitAnswer({ type: "readTextFile", path }),
           }

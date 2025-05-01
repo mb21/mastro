@@ -118,20 +118,17 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
             })
           window.fs = {
             findFiles: pattern => postMessageAndAwaitAnswer({ type: "findFiles", pattern }),
-            readDir: path => postMessageAndAwaitAnswer({ type: "readDir", path }),
+            readDir: pathOfDir => postMessageAndAwaitAnswer({ type: "readDir", path: pathOfDir }),
             readTextFile: path => postMessageAndAwaitAnswer({ type: "readTextFile", path }),
           }
+
+          // after we've populated window.fs, we can import things that use it
+          const { matchRoute } = await import("mastro/router.js")
 
           const backBtn = document.getElementById("backBtn")
           const pathInput = document.getElementById("pathInput")
           const history = ${JSON.stringify(history)}
           const iframe = document.querySelector("iframe")
-
-          // TODO: import proper implementation from mastro
-          const matchRoute = path => {
-            const p = path === "/" ? "/index" : path
-            return { filePath: "/routes" + p + ".server.js" }
-          }
 
           const render = async (path) => {
             console.log('rendering ', path)
@@ -142,21 +139,32 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
             pathInput.value = path
             backBtn.disabled = history.length < 1
             history.push(path)
-            try {
-              const route = matchRoute(path)
-              const { GET } = await import(route.filePath)
-              const output = await (await GET()).text()
 
-              // following hack tells parent window when a link was clicked or similar
-              const [x, y] = output.split("</head>")
-              const output2 = x +
-                '<script' + '>window.addEventListener("unload", () => window.parent.postMessage({ type: "navigate", target: document.activeElement.getAttribute("href") }, "*"))</script' + '>' +
-                "</head>" + y
+            const urlStr = "http://localhost" + path
+            const route = matchRoute(urlStr)
+            if (route) {
+              try {
+                const { GET } = await import(route.filePath)
+                const res = await GET(new Request(urlStr))
+                if (res instanceof Response) {
+                  const output = await res.text()
 
-              iframe.srcdoc = output2
-            } catch (e) {
-              console.error(e)
-              iframe.contentDocument.body.innerHTML = '<p>Failed to render site: ' + e + '</p>'
+                  // following hack injects a script that tells parent window when a link was clicked or similar
+                  const [x, y] = output.split("</head>")
+                  const output2 = x +
+                    '<script' + '>window.addEventListener("unload", () => window.parent.postMessage({ type: "navigate", target: document.activeElement.getAttribute("href") }, "*"))</script' + '>' +
+                    "</head>" + y
+
+                  iframe.srcdoc = output2
+                } else {
+                  iframe.srcdoc = '<p>GET must return a Response object</p>'
+                }
+              } catch (e) {
+                console.error(e)
+                iframe.srcdoc = '<p>Failed to render site: ' + e + '</p>'
+              }
+            } else {
+              iframe.srcdoc = '<p>404 route not found</p>'
             }
           }
 

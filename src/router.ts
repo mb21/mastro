@@ -1,16 +1,16 @@
 import { findFiles } from './fs.ts'
 
 const pathSegments = []
-for (const filePath of await findFiles('routes/**/*.ts')) {
-  const segments = filePath.split('/').slice(1).map(segment => {
-    const matches = segment.match(/^\[([a-zA-Z0-9]+)\]\.server\.ts$/)
+for (const filePath of await findFiles('routes/**/*.server.{ts,js}')) {
+  const [_first, ...segments] = filePath.split('/').slice(1).map(segment => {
+    const matches = segment.match(/^\[([a-zA-Z0-9]+)\]\.server\.(ts|js)$/)
     if (matches?.[1]) {
       // `[slug].ts` -> `:slug`
       const param = matches[1]
       return ':' + param
-    } else if (segment === 'index.server.ts') {
+    } else if (segment === 'index.server.ts' || segment === 'index.server.js') {
       return
-    } else if (segment.endsWith('.server.ts')) {
+    } else if (segment.endsWith('.server.ts') || segment.endsWith('.server.js')) {
       return segment.slice(0, -10)
     } else {
       return segment

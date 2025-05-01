@@ -44,7 +44,7 @@ export const findFiles = async (pattern: string): Promise<string[]> => {
     const paths = []
     for await (const file of expandGlob(pattern)) {
       if (file.isFile && !file.isSymlink) {
-        const relativeToProjectRoot = file.path.slice(Deno.cwd().length + 1)
+        const relativeToProjectRoot = file.path.slice(Deno.cwd().length)
         paths.push(relativeToProjectRoot)
       }
     }

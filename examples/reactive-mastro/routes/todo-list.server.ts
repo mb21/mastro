@@ -15,6 +15,8 @@ export const GET = () =>
           <ul data-bind="renderedTodos">
           </ul>
         </todo-list>
+
+        <script type="module" src="todo-list.client.ts"></script>
         `
     })
 ))

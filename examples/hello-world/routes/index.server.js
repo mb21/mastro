@@ -13,9 +13,7 @@ export const GET = () =>
         <ul>
           ${readDir("/routes").then(dir => dir.map(file => html`<li>${file}</li>`))}
         </ul>
-        <pre>
-          ${readTextFile("/routes/about.server.js")}
-        </pre>
+        <pre>${readTextFile("/routes/about.server.js")}</pre>
         `
     })
   )

@@ -66,6 +66,10 @@ export const activate = async (context: vscode.ExtensionContext) => {
             }
             return
           }
+          case "showError": {
+            vscode.window.showErrorMessage(msg.error)
+            return
+          }
         }
       })
 
@@ -99,7 +103,8 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
           would be on a different origin, and then the importmap wouldn't apply anymore.
         -->
         <script type="module">
-          const vscode = acquireVsCodeApi()
+        const vscode = acquireVsCodeApi()
+        try {
 
           const postMessageAndAwaitAnswer = msg =>
             new Promise((resolve, reject) => {
@@ -141,30 +146,34 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
             history.push(path)
 
             const urlStr = "http://localhost" + path
-            const route = matchRoute(urlStr)
-            if (route) {
-              try {
-                const { GET } = await import(route.filePath)
-                const res = await GET(new Request(urlStr))
-                if (res instanceof Response) {
-                  const output = await res.text()
+            try {
+              const route = matchRoute(urlStr)
+              if (route) {
+                try {
+                  const { GET } = await import(route.filePath)
+                  const res = await GET(new Request(urlStr))
+                  if (res instanceof Response) {
+                    const output = await res.text()
 
-                  // following hack injects a script that tells parent window when a link was clicked or similar
-                  const [x, y] = output.split("</head>")
-                  const output2 = x +
-                    '<script' + '>window.addEventListener("unload", () => window.parent.postMessage({ type: "navigate", target: document.activeElement.getAttribute("href") }, "*"))</script' + '>' +
-                    "</head>" + y
+                    // following hack injects a script that tells parent window when a link was clicked or similar
+                    const [x, y] = output.split("</head>")
+                    const output2 = x +
+                      '<script' + '>window.addEventListener("unload", () => window.parent.postMessage({ type: "navigate", target: document.activeElement.getAttribute("href") }, "*"))</script' + '>' +
+                      "</head>" + y
 
-                  iframe.srcdoc = output2
-                } else {
-                  iframe.srcdoc = '<p>GET must return a Response object</p>'
+                    iframe.srcdoc = output2
+                  } else {
+                    iframe.srcdoc = '<p>GET must return a Response object</p>'
+                  }
+                } catch (e) {
+                  console.error(e)
+                  iframe.srcdoc = '<p>Failed to render site: ' + e + '</p>'
                 }
-              } catch (e) {
-                console.error(e)
-                iframe.srcdoc = '<p>Failed to render site: ' + e + '</p>'
+              } else {
+                iframe.srcdoc = '<p>404 route not found</p>'
               }
-            } else {
-              iframe.srcdoc = '<p>404 route not found</p>'
+            } catch (e) {
+              iframe.srcdoc = '<p>' + e + '</p>'
             }
           }
 
@@ -191,6 +200,9 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
               type: "popHistoryTwice",
             })
           })
+        } catch (e) {
+          vscode.postMessage({ type: "showError", error: e.toString() })
+        }
         </script>
 
         <style>

@@ -1,5 +1,4 @@
 import * as vscode from 'vscode'
-import { posix } from 'node:path'
 
 export const activate = async (context: vscode.ExtensionContext) => {
   context.subscriptions.push(

@@ -125,6 +125,7 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
             findFiles: pattern => postMessageAndAwaitAnswer({ type: "findFiles", pattern }),
             readDir: pathOfDir => postMessageAndAwaitAnswer({ type: "readDir", path: pathOfDir }),
             readTextFile: path => postMessageAndAwaitAnswer({ type: "readTextFile", path }),
+            staticFiles: ${await getStaticFiles(webview)},
           }
 
           // after we've populated window.fs, we can import things that use it
@@ -145,23 +146,51 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
             backBtn.disabled = history.length < 1
             history.push(path)
 
-            const urlStr = "http://localhost" + path
+            const replaceAsync = async (str, regex, asyncFn) => {
+              const promises = []
+              str.replace(regex, (match, ...args) => {
+                  promises.push(asyncFn(match, ...args))
+                  return match
+              })
+              const data = await Promise.all(promises)
+              return str.replace(regex, () => data.shift())
+            }
+
+            const toDataUrl = url =>
+              new Promise(async resolve => {
+                const reader = new FileReader()
+                reader.onload = () => resolve(reader.result)
+                reader.readAsDataURL(await fetch(url).then(r => r.blob()))
+              })
+
+            const replaceStaticLinksWithDataUrls = str =>
+              replaceAsync(str, /(<.*?[src|href]=")([^"]+)(".*>)/gi, async (match, p1, p2, p3) => {
+                  const assetPath = URL.parse(p2, "http://localhost" + path)?.pathname
+                  const webViewUrl = window.fs.staticFiles[assetPath]
+                  return webViewUrl
+                    ? p1 + await toDataUrl(webViewUrl) + p3
+                    : match
+                  }
+              )
+
+            const insertNavigationInterceptScript = str => {
+              // hack that injects a script that tells parent window when a link was clicked or similar
+              const [head, tail] = str.split("</head>")
+              return head + '<script' + '>window.addEventListener("unload", () => window.parent.postMessage({ type: "navigate", target: document.activeElement.getAttribute("href") }, "*"))</script' + '>' + "</head>" + tail
+            }
+
             try {
+              const urlStr = "http://localhost" + path
               const route = matchRoute(urlStr)
               if (route) {
                 try {
                   const { GET } = await import(route.filePath)
                   const res = await GET(new Request(urlStr))
                   if (res instanceof Response) {
-                    const output = await res.text()
-
-                    // following hack injects a script that tells parent window when a link was clicked or similar
-                    const [x, y] = output.split("</head>")
-                    const output2 = x +
-                      '<script' + '>window.addEventListener("unload", () => window.parent.postMessage({ type: "navigate", target: document.activeElement.getAttribute("href") }, "*"))</script' + '>' +
-                      "</head>" + y
-
-                    iframe.srcdoc = output2
+                    let output = await res.text()
+                    output = await replaceStaticLinksWithDataUrls(output)
+                    output = insertNavigationInterceptScript(output)
+                    iframe.srcdoc = output
                   } else {
                     iframe.srcdoc = '<p>GET must return a Response object</p>'
                   }
@@ -256,4 +285,14 @@ const getImportMap = async (webview: vscode.Webview, context: vscode.ExtensionCo
     imports['mastro/' + fileName] = webview.asWebviewUri(uri).toString()
   }
   return JSON.stringify({ imports })
+}
+
+const getStaticFiles = async (webview: vscode.Webview) => {
+  const files = {} as Record<string, string>
+  for (const uri of await vscode.workspace.findFiles('routes/**/*.*')) {
+    if (!uri.path.endsWith('.server.js')) {
+      files[uri.path.slice(7)] = webview.asWebviewUri(uri).toString()
+    }
+  }
+  return JSON.stringify(files)
 }

@@ -1,4 +1,5 @@
 import tsBlankSpace from 'ts-blank-space'
+import { serveFile } from "@std/http/file-server"
 import { join } from '@std/path'
 import { matchRoute } from './router.ts'
 import { jsResponse } from './routes.ts'
@@ -24,7 +25,7 @@ export const handler = async (req: Request) => {
     } else {
       const route = matchRoute(req.url)
       if (route) {
-        const modulePath = Deno.cwd() + '/' + route.filePath
+        const modulePath = Deno.cwd() + route.filePath
         console.info(`Received ${req.url}, loading ${modulePath}`)
         const { GET } = await import(modulePath)
         const res = await GET(req)
@@ -34,7 +35,7 @@ export const handler = async (req: Request) => {
           throw Error('GET must return a Response object')
         }
       } else {
-        return new Response('404 not found', { status: 404 })
+        return serveFile(req, 'routes' + pathname)
       }
     }
   } catch (e: any) {

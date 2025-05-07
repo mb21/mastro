@@ -1,12 +1,12 @@
 import { Layout } from "../components/Layout.ts"
 import { html, renderToString } from "mastro/html.ts"
 import { htmlResponse } from "mastro/routes.ts"
+import { readDir } from "mastro/fs.ts"
 
 export const GET = async (): Promise<Response> => {
   const title = "Reactive Mastro demos"
 
-  const examples = (await Array.fromAsync(Deno.readDir('routes')))
-    .map(file => file.name)
+  const examples = (await readDir('routes'))
     .filter(name => name.endsWith('.server.ts') && name !== 'index.server.ts')
     .map(name => name.slice(0, -10))
     .toSorted((a, b) => a > b ? 1 : -1)

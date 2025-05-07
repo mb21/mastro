@@ -1,20 +1,22 @@
 import tsBlankSpace from 'ts-blank-space'
+import { serveFile } from "@std/http/file-server"
 import { join } from '@std/path'
 import { matchRoute } from './router.ts'
 import { jsResponse } from './routes.ts'
+import { readTextFile } from './fs.ts'
 
-export const handler: Deno.ServeHandler = async req => {
+export const handler = async (req: Request) => {
   const url = new URL(req.url)
   const { pathname } = url
 
   try {
     if (pathname.endsWith('.client.ts')) {
       const prefix = pathname.startsWith('/components/') ? '' : 'routes/'
-      const text = await Deno.readTextFile(prefix + pathname.slice(1))
+      const text = await readTextFile(prefix + pathname.slice(1))
       return jsResponse(tsBlankSpace(text))
     } else if (pathname.startsWith('/client/mastro/')) {
       const filePath = import.meta.resolve(pathname.slice('/client/'.length)).slice('file://'.length)
-      const text = await Deno.readTextFile(filePath)
+      const text = await readTextFile(filePath)
       return jsResponse(tsBlankSpace(text))
     } else if (pathname.startsWith('/client/')) {
       const specifier = import.meta.resolve(pathname.slice('/client/'.length))
@@ -23,7 +25,7 @@ export const handler: Deno.ServeHandler = async req => {
     } else {
       const route = matchRoute(req.url)
       if (route) {
-        const modulePath = Deno.cwd() + '/' + route.filePath
+        const modulePath = Deno.cwd() + route.filePath
         console.info(`Received ${req.url}, loading ${modulePath}`)
         const { GET } = await import(modulePath)
         const res = await GET(req)
@@ -33,7 +35,7 @@ export const handler: Deno.ServeHandler = async req => {
           throw Error('GET must return a Response object')
         }
       } else {
-        return new Response('404 not found', { status: 404 })
+        return serveFile(req, 'routes' + pathname)
       }
     }
   } catch (e: any) {
@@ -61,7 +63,7 @@ const loadDependency = async (specifier: string) => {
     const prefix = '../..'
 
     const moduleDir = `${prefix}/node_modules/${module}`
-    const pkg = JSON.parse(await Deno.readTextFile(`${moduleDir}/package.json`))
+    const pkg = JSON.parse(await readTextFile(`${moduleDir}/package.json`))
 
     // TODO: also support https://nodejs.org/api/packages.html#main
     // see https://nodejs.org/api/packages.html#exports
@@ -71,7 +73,7 @@ const loadDependency = async (specifier: string) => {
       ? join(moduleDir, entryPoint)
       : join(moduleDir, entryPoint, path).replaceAll('index.js/', '')
 
-    return Deno.readTextFile(filePath)
+    return readTextFile(filePath)
   } else {
     throw Error('TODO: implement deno module resolution')
   }

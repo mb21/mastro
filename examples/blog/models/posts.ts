@@ -1,4 +1,5 @@
 import { extractYaml } from '@std/front-matter'
+import { readDir, readTextFile } from 'mastro/fs.ts'
 
 export interface Post {
   content: string;
@@ -7,7 +8,7 @@ export interface Post {
 }
 
 export const getPost = async (slug: string): Promise<Post> => {
-  const text = await Deno.readTextFile(`./data/posts/${slug}.md`)
+  const text = await readTextFile(`./data/posts/${slug}.md`)
   const { attrs, body } = extractYaml(text)
   return {
     content: body,
@@ -21,8 +22,5 @@ export const getPosts = async () => {
   return Promise.all(slugs.map(getPost))
 }
 
-export const getPostSlugs = async () => {
-  const iter = Deno.readDir('./data/posts')
-  const files = await Array.fromAsync(iter)
-  return files.map(file => file.name.replace('.md', ''))
-}
+export const getPostSlugs = async () =>
+  (await readDir('./data/posts')).map(name => name.replace('.md', ''))

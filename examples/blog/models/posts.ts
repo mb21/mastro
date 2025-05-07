@@ -1,18 +1,18 @@
-import { extractYaml } from '@std/front-matter'
-import { readDir, readTextFile } from 'mastro/fs.ts'
+import { readDir } from 'mastro/fs.ts'
+import { readMarkdownFile } from 'mastro/markdown.ts'
+import { Html } from "mastro/html.ts";
 
 export interface Post {
-  content: string;
+  content: Html;
   data: Record<string, string>;
   slug: string;
 }
 
 export const getPost = async (slug: string): Promise<Post> => {
-  const text = await readTextFile(`./data/posts/${slug}.md`)
-  const { attrs, body } = extractYaml(text)
+  const { content, data } = await readMarkdownFile(`./data/posts/${slug}.md`)
   return {
-    content: body,
-    data: attrs as Record<string, string>,
+    content,
+    data,
     slug,
   }
 }

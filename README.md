@@ -16,7 +16,7 @@ A *m*inimal take on an [*Astro*](https://astro.build)-like MPA web framework.
 
 - While some frameworks try to erase the boundary between client and server (by putting a leaky abstraction on top), Mastro makes it explicit which parts of your app run where and when.
 
-- File-based routing: `pages/` contains files that are served verbatim, as well as [route handlers](https://blog.val.town/blog/the-api-we-forgot-to-name/). A handler always takes a `Request` object (and no props, and hopefully no context) and returns a `Response` object.
+- File-based routing: `routes/` contains files that are served verbatim, as well `.server.js` files that export [route handlers](https://blog.val.town/blog/the-api-we-forgot-to-name/). A handler always takes a `Request` object (and no props, and hopefully no context) and returns a `Response` object.
 
 - Server components are simple JS functions that by convention take a props object.
 

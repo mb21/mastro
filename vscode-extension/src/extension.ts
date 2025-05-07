@@ -13,7 +13,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
 
       const panel = vscode.window.createWebviewPanel(
         'mastro',
-        'Mastro dev server',
+        'Preview',
         vscode.ViewColumn.Two,
         {
           enableScripts: true,

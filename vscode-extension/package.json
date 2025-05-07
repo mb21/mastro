@@ -1,7 +1,8 @@
 {
   "name": "mastro-ssg-vscode-extension",
   "displayName": "Mastro SSG (static site generation)",
-  "description": "Build your static site inside your browser using vscode.dev or github.dev",
+  "description": "Build static websites in your browser using vscode.dev or github.dev",
+  "icon": "",
   "version": "0.0.1",
   "repository": {
     "url": "https://github.com/mb21/mastro.git",
@@ -18,7 +19,7 @@
     "commands": [
       {
         "command": "mastro.start",
-        "title": "Start dev server",
+        "title": "Preview Website",
         "category": "mastro"
       }
     ]

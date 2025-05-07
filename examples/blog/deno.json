@@ -8,7 +8,6 @@
   },
   "patch": ["../../"],
   "imports": {
-    "@std/front-matter": "jsr:@std/front-matter@^1.0.5",
     "mastro/": "../../src/",
     "mastro/reactive": "../../src/reactive/reactive.ts"
   }

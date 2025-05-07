@@ -6,14 +6,14 @@ import { getPost, getPostSlugs } from "../models/posts.ts"
 
 export const GET = async (req: Request): Promise<Response> => {
   const post = await getPost(getSlug(req.url) || '')
-  const title = post.data.title + ' | My blog'
+  const title = post.meta.title + ' | My blog'
   return htmlResponse(
     await renderToString(
       Layout({
         title,
         children: html`
           <article>
-            <h2>${post.data.title}</h2>
+            <h2>${post.meta.title}</h2>
             <p>${post.content}</p>
           </article>
           `

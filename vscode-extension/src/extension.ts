@@ -311,7 +311,7 @@ const getImportMap = async (
     }
   }
 
-  ["fs.js", "generate.js", "html.js", "router.js", "routes.js", "server.js"]
+  ["fs.js", "generate.js", "html.js", "markdown.js", "router.js", "routes.js", "server.js"]
     .forEach((fileName) => {
       const uri = vscode.Uri.joinPath(context.extensionUri, "mastro", fileName);
       imports["mastro/" + fileName] = webview.asWebviewUri(uri).toString();

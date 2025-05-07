@@ -13,7 +13,7 @@ export const GET = async (): Promise<Response> => {
         children: html`
           <h1>My blog</h1>
           ${posts.map(post => html`
-            <p><a href=${post.slug + '.html' }>${post.data.title}</a></p>
+            <p><a href=${post.slug + '.html' }>${post.meta.title}</a></p>
           `)}
 
           <style>

@@ -8,6 +8,8 @@ export const activate = async (context: vscode.ExtensionContext) => {
         vscode.window.showErrorMessage('Working folder not found, open a folder and try again')
         return
       }
+      const basePath = rootFolder.path === "/" ? "" : rootFolder.path
+      const basePathLen = basePath.length
 
       const panel = vscode.window.createWebviewPanel(
         'mastro',
@@ -20,7 +22,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
       const { webview } = panel
 
       const history: string[] = []
-      webview.html = await getWebviewContent(webview, context, history)
+      webview.html = await getWebviewContent(webview, context, basePathLen, history)
       webview.onDidReceiveMessage(async msg => {
         switch (msg.type) {
           case "pushHistory": {
@@ -36,7 +38,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
             const { pattern, requestId } = msg
             const response = []
             for (const uri of await vscode.workspace.findFiles(pattern)) {
-              response.push(uri.path)
+              response.push(uri.path.slice(basePathLen))
             }
             webview.postMessage({ type: 'success', response, requestId })
             return
@@ -44,7 +46,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
           case "readDir": {
             const { path, requestId } = msg
             try {
-              const entries = await vscode.workspace.fs.readDirectory(rootFolder.with({ path }))
+              const entries = await vscode.workspace.fs.readDirectory(rootFolder.with({ path: basePath + path }))
               const response = entries.flatMap(([name, type]) =>
                 type === vscode.FileType.File ? name : []
               )
@@ -57,7 +59,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
           case "readTextFile": {
             const { path, requestId } = msg
             try {
-              const bs = await vscode.workspace.fs.readFile(rootFolder.with({ path }))
+              const bs = await vscode.workspace.fs.readFile(rootFolder.with({ path: basePath + path }))
               const response = new TextDecoder().decode(bs)
               webview.postMessage({ type: 'success', response, requestId })
             } catch (e) {
@@ -75,7 +77,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
       const disposables: vscode.Disposable[] = []
 
       vscode.workspace.onDidSaveTextDocument(async e => {
-        const html = await getWebviewContent(webview, context, history)
+        const html = await getWebviewContent(webview, context, basePathLen, history)
         webview.html = ''
         webview.html = html
       }, this, disposables)
@@ -85,7 +87,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
   )
 }
 
-const getWebviewContent = async (webview: vscode.Webview, context: vscode.ExtensionContext, history: string[]) => {
+const getWebviewContent = async (webview: vscode.Webview, context: vscode.ExtensionContext, basePathLen: number, history: string[]) => {
   return `<!DOCTYPE html>
     <html lang="en">
       <head>
@@ -94,7 +96,7 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
         <title></title>
 
         <script type="importmap">
-          ${await getImportMap(webview, context)}
+          ${await getImportMap(webview, context, basePathLen)}
         </script>
 
         <!--
@@ -124,7 +126,7 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
             findFiles: pattern => postMessageAndAwaitAnswer({ type: "findFiles", pattern }),
             readDir: pathOfDir => postMessageAndAwaitAnswer({ type: "readDir", path: pathOfDir }),
             readTextFile: path => postMessageAndAwaitAnswer({ type: "readTextFile", path }),
-            staticFiles: ${await getStaticFiles(webview)},
+            staticFiles: ${await getStaticFiles(webview, basePathLen)},
           }
 
           // after we've populated window.fs, we can import things that use it
@@ -256,6 +258,7 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
             height: calc(100vh - 25px);
             width: 100%;
             overflow: hidden;
+            background-color: white;
           }
         </style>
       </head>
@@ -270,13 +273,11 @@ const getWebviewContent = async (webview: vscode.Webview, context: vscode.Extens
     `
 }
 
-const getImportMap = async (webview: vscode.Webview, context: vscode.ExtensionContext) => {
+const getImportMap = async (webview: vscode.Webview, context: vscode.ExtensionContext, basePathLen: number) => {
   const imports = {} as Record<string, string>
   for (const uri of await vscode.workspace.findFiles('**/*.*')) {
     if (uri.path.endsWith('.js')) {
-      imports[uri.path] = webview.asWebviewUri(uri).toString()
-    } else {
-      // TODO: CSS etc.
+      imports[uri.path.slice(basePathLen)] = webview.asWebviewUri(uri).toString()
     }
   }
   for (const fileName of ['fs.js', 'generate.js', 'html.js', 'router.js', 'routes.js', 'server.js']) {
@@ -286,11 +287,11 @@ const getImportMap = async (webview: vscode.Webview, context: vscode.ExtensionCo
   return JSON.stringify({ imports })
 }
 
-const getStaticFiles = async (webview: vscode.Webview) => {
+const getStaticFiles = async (webview: vscode.Webview, basePathLen: number) => {
   const files = {} as Record<string, string>
   for (const uri of await vscode.workspace.findFiles('routes/**/*.*')) {
     if (!uri.path.endsWith('.server.js')) {
-      files[uri.path.slice(7)] = webview.asWebviewUri(uri).toString()
+      files[uri.path.slice(7 + basePathLen)] = webview.asWebviewUri(uri).toString()
     }
   }
   return JSON.stringify(files)

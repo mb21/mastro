@@ -1,25 +1,28 @@
-import { extractYaml, test } from "@std/front-matter";
-import { micromark, type Options } from "micromark";
-import { gfm, gfmHtml } from "micromark-extension-gfm";
-import { readTextFile } from "./fs.ts";
-import { unsafeInnerHtml } from "./html.ts";
+import { extractYaml, test } from '@std/front-matter'
+import rehypeStringify from "https://esm.sh/rehype-stringify@10.0";
+import remarkGfm from "https://esm.sh/remark-gfm@4.0";
+import remarkParse from 'https://esm.sh/remark-parse@11.0';
+import remarkRehype from 'https://esm.sh/remark-rehype@11.1';
+import { unified } from "https://esm.sh/unified@11.0";
 
-export const markdownToHtml = (md: string, opts?: Options) => {
-  const { attrs, body } = test(md, ["yaml"])
-    ? extractYaml(md)
-    : { attrs: {}, body: md };
-  const content = unsafeInnerHtml(
-    micromark(body, {
-      extensions: [gfm()],
-      htmlExtensions: [gfmHtml()],
-      ...opts,
-    }),
-  );
+import { readTextFile } from "./fs.ts";
+
+export const markdownToHtml = async (value: string) => {
+  const { attrs, body } = test(value)
+    ? extractYaml(value)
+    : { attrs: {}, body: value }
+  const file = await unified()
+    .use(remarkParse)
+    .use(remarkGfm)
+    .use(remarkRehype)
+    .use(rehypeStringify)
+    .process(body)
+
   return {
-    content,
+    content: new String(file),
     data: attrs as Record<string, string>,
   };
 };
 
-export const readMarkdownFile = async (path: string, opts?: Options) =>
-  markdownToHtml(await readTextFile(path), opts);
+export const readMarkdownFile = async (path: string) =>
+  markdownToHtml(await readTextFile(path));

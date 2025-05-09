@@ -13,8 +13,6 @@
     "@std/path": "jsr:@std/path@^1.0.6",
     "@std/http": "jsr:@std/http@^1.0.15",
     "@maverick-js/signals": "npm:@maverick-js/signals@6.0.0",
-    "micromark": "npm:micromark@4.0.2",
-    "micromark-extension-gfm": "npm:micromark-extension-gfm@3.0.0",
     "ts-blank-space": "npm:ts-blank-space"
   }
 }

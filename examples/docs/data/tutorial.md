@@ -1,6 +1,5 @@
 This tutorial teaches you the basics of HTML, CSS and JavaScript – the core web technologies. We use the Mastro framework – a minimal server and static site generator that follows the philosophy of KISS (keep it simple stupid).
 
-
 ## Starting with HTML content
 
 The simplest Mastro website is a single HTML file. Create a file `pages/index.html` with the following contents:
@@ -23,56 +22,57 @@ Start the server with `deno task start` and open `http://localhost:8000` in your
 
 When creating a new page, always start with the HTML. It's the foundation. Later you can add CSS to make it look nice, and maybe JavaScript to make it interactive. But always start with the content. Let's add some:
 
-```html
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>My website</title>
-  </head>
-  <body>
-    <h1>What is Structured Content?</h1>
-    <p>Let's go through the most important HTML elements to structure your content:</p>
-
-    <h2>Paragraphs</h2>
-    <p>The <code>p</code> element marks a paragraph of text.</p>
-
-    <h2>Headings</h2>
-    <p>
-      At the very top, we have the heading of this page in a <code>h1</code> element.
-      This is what search engines (like Google) and screen readers (used by visually impaired readers)
-      look for when they want to know what the page's title is.
-      Therefore, you should only ever have one <code>h1</code> element on any given page.
-    </p>
-    <p>
-      The <code>h2</code> element is a sub-heading. HTML has <code>h1</code> up to <code>h6</code>
-      elements, which you should use to mark the structure of your page (like a table of contents).
-    </p>
-
-    <h2>Lists</h2>
-    <p>Let's add a ordered list:<p>
-    <ol>
-      <li>list item one</li>
-      <li>list item two</li>
-      <li>list item three</li>
-    </ol>
-    <p>and an unordered list:<p>
-    <ul>
-      <li>list item one</li>
-      <li>list item two</li>
-      <li>list item three</li>
-    </ul>
-
-    <h2>Images</h2>
-    <p>Finally, let's add an image:</p>
-    <p><img src="chair.jpg" alt="A chair" ></p>
-    <p>
-      Note the <code>alt</code> attribute on the image, which contains alternative text that is
-      read to visually impaired readers that cannot see the image or shown if the image cannot
-      be loaded by the browser. If the image is relevant content, the alt text should therefore
-      describe what's on the image. If the image is just decoration, you should use <code>alt=""</code.
-    </p>
-  </body>
-</html>
+```diff-html
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>My website</title>
+    </head>
+    <body>
+-     Hello world!
++     <h1>What is Structured Content?</h1>
++     <p>Let's go through the most important HTML elements to structure your content:</p>
++
++     <h2>Paragraphs</h2>
++     <p>The <code>p</code> element marks a paragraph of text.</p>
++
++     <h2>Headings</h2>
++     <p>
++       At the very top, we have the heading of this page in a <code>h1</code> element.
++       This is what search engines (like Google) and screen readers (used by visually impaired readers)
++       look for when they want to know what the page's title is.
++       Therefore, you should only ever have one <code>h1</code> element on any given page.
++     </p>
++     <p>
++       The <code>h2</code> element is a sub-heading. HTML has <code>h1</code> up to <code>h6</code>
++       elements, which you should use to mark the structure of your page (like a table of contents).
++     </p>
++
++     <h2>Lists</h2>
++     <p>Let's add a ordered list:<p>
++     <ol>
++       <li>list item one</li>
++       <li>list item two</li>
++       <li>list item three</li>
++     </ol>
++     <p>and an unordered list:<p>
++     <ul>
++       <li>list item one</li>
++       <li>list item two</li>
++       <li>list item three</li>
++     </ul>
++
++     <h2>Images</h2>
++     <p>Finally, let's add an image:</p>
++     <p><img src="chair.jpg" alt="A chair" ></p>
++     <p>
++       Note the <code>alt</code> attribute on the image, which contains alternative text that is
++       read to visually impaired readers that cannot see the image or shown if the image cannot
++       be loaded by the browser. If the image is relevant content, the alt text should therefore
++       describe what's on the image. If the image is just decoration, you should use <code>alt=""</code.
++     </p>
+    </body>
+  </html>
 ```
 
 ## Styles in CSS

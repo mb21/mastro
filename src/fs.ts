@@ -11,7 +11,7 @@ const vscodeExtensionFs = typeof window === "object"
  * Reads the directory and lists its files non-recursively and ignoring symlinks.
  */
 export const readDir = async (path: string): Promise<string[]> => {
-  path = ensureSlash(path);
+  path = ensureLeadingSlash(path);
   return fs
     ? (await fs.readdir("." + path, { withFileTypes: true }))
       .flatMap((file) =>
@@ -21,7 +21,7 @@ export const readDir = async (path: string): Promise<string[]> => {
 };
 
 export const readTextFile = (path: string): Promise<string> => {
-  path = ensureSlash(path);
+  path = ensureLeadingSlash(path);
   return fs
     ? fs.readFile("." + path, { encoding: "utf8" })
     : vscodeExtensionFs.readTextFile(path);
@@ -52,4 +52,4 @@ export const findFiles = async (pattern: string): Promise<string[]> => {
   }
 };
 
-const ensureSlash = (path: string) => path.startsWith("/") ? path : "/" + path;
+const ensureLeadingSlash = (path: string) => path.startsWith("/") ? path : "/" + path;

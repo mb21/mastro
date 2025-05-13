@@ -25,7 +25,8 @@ for (const filePath of await findFiles('routes/**/*.server.{ts,js}')) {
 
 // TODO: sort this according to solid route precedence criteria
 pathSegments.sort((a, b) => a.segments.length - b.segments.length)
-const routes = pathSegments.map(r => ({
+
+export const routes = pathSegments.map(r => ({
   filePath: r.filePath,
   pattern: new URLPattern({ pathname: `/${r.segments.join('/')}` }),
 }))
@@ -41,10 +42,9 @@ export const matchRoute = (urlPath: string) => {
           ` Mastro VSCode extension (${filePath})`
         )
       }
-      const { pathname } = match
       return {
         filePath,
-        params: pathname.groups || {}
+        params: match.pathname.groups || {}
       }
     }
   }

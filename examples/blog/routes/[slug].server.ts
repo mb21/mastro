@@ -5,7 +5,7 @@ import { htmlResponse } from "mastro/routes.ts"
 import { getPost, getPostSlugs } from "../models/posts.ts"
 
 export const GET = async (req: Request): Promise<Response> => {
-  const post = await getPost(getSlug(req.url) || '')
+  const post = await getPost(getSlug(req.url))
   const title = post.meta.title + ' | My blog'
   return htmlResponse(
     await renderToString(
@@ -28,4 +28,4 @@ export const getStaticPaths = async (): Promise<StaticPath[]> => {
 }
 
 const getSlug = (url: string) =>
-  url.split('/').at(-1)?.slice(0, -5)
+  url.split('/').at(-1) || ''

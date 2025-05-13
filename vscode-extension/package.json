@@ -18,14 +18,14 @@
   "contributes": {
     "commands": [
       {
-        "command": "mastro.start",
-        "title": "Preview Website",
+        "command": "mastro.preview",
+        "title": "Preview and Generate Website",
         "category": "mastro"
       }
     ]
   },
   "scripts": {
-    "open-in-browser": "vscode-test-web --extensionDevelopmentPath=. ../examples/hello-world/",
+    "open-in-browser": "npm run build; vscode-test-web --extensionDevelopmentPath=. ../examples/hello-world/",
     "vscode:prepublish": "npm run build",
     "build": "tsc -p ./ && tsc ../src/*.ts --outDir mastro --target esnext --rewriteRelativeImportExtensions",
     "watch": "tsc -watch -p ./"

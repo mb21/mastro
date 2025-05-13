@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 
 export const activate = async (context: vscode.ExtensionContext) => {
   context.subscriptions.push(
-    vscode.commands.registerCommand("mastro.start", async () => {
+    vscode.commands.registerCommand("mastro.preview", async () => {
       const rootFolder = vscode.workspace.workspaceFolders?.[0]?.uri;
       if (!rootFolder) {
         vscode.window.showErrorMessage(
@@ -12,6 +12,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
       }
       const basePath = rootFolder.path === "/" ? "" : rootFolder.path;
       const basePathLen = basePath.length;
+      const outputChannel = vscode.window.createOutputChannel("Mastro Generate")
 
       const panel = vscode.window.createWebviewPanel(
         "mastro",
@@ -50,6 +51,41 @@ export const activate = async (context: vscode.ExtensionContext) => {
             webview.postMessage({ type: "success", response, requestId });
             return;
           }
+          case "clearOutputChannel": {
+            outputChannel.clear();
+            return;
+          }
+          case "generateFiles": {
+            const { files } = msg;
+            try {
+              const wsedit = new vscode.WorkspaceEdit();
+              const encoder = new TextEncoder();
+              // TODO: clear docs folder
+              wsedit.createFile(
+                vscode.Uri.joinPath(rootFolder, "docs/.nojekyll"),
+                { ignoreIfExists: true },
+              );
+              await Promise.all(files.map(async (file: any) => {
+                const { outFilePath, output } = file;
+                const fileUri = rootFolder.with({ path: "/docs" + outFilePath })
+                const contents = output
+                  ? encoder.encode(output)
+                  : await vscode.workspace.fs.readFile(
+                      rootFolder.with({ path: "/routes" + outFilePath }),
+                    );
+                wsedit.createFile(fileUri, { overwrite: true, contents });
+              }));
+              if (await vscode.workspace.applyEdit(wsedit)) {
+                outputChannel.appendLine('🟢 Updated docs/ folder. Click the "Source Control" icon on the left, then click "Commit & Push" to publish your changes.');
+                outputChannel.show(true);
+              } else {
+                vscode.window.showErrorMessage("Could not create files in the workspace.");
+              }
+            } catch (e) {
+              vscode.window.showErrorMessage(`${e}`);
+            }
+            return;
+          }
           case "readDir": {
             const { path, requestId } = msg;
             try {
@@ -78,8 +114,17 @@ export const activate = async (context: vscode.ExtensionContext) => {
             }
             return;
           }
+          case "setPanelTitle": {
+            panel.title = msg.title;
+            return;
+          }
           case "showError": {
             vscode.window.showErrorMessage(msg.error);
+            return;
+          }
+          case "showErrorInOutputChannel": {
+            outputChannel.appendLine("🔴 " + msg.error);
+            outputChannel.show(true);
             return;
           }
         }
@@ -113,12 +158,12 @@ const getWebviewContent = async (
   basePathLen: number,
   history: string[],
 ) => {
-  return `<!DOCTYPE html>
+  return String.raw`<!DOCTYPE html>
     <html lang="en">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title></title>
+        <title>WebviewPanel</title>
 
         <script type="importmap">
           ${await getImportMap(webview, context, basePathLen)}
@@ -155,7 +200,7 @@ const getWebviewContent = async (
           }
 
           // after we've populated window.fs, we can import things that use it
-          const { matchRoute } = await import("mastro/router.js")
+          const { routes, matchRoute } = await import("mastro/router.js")
 
           const backBtn = document.getElementById("backBtn")
           const pathInput = document.getElementById("pathInput")
@@ -163,6 +208,7 @@ const getWebviewContent = async (
           const iframe = document.querySelector("iframe")
 
           const render = async (path) => {
+            console.clear()
             console.log('rendering ', path)
             vscode.postMessage({
               type: "pushHistory",
@@ -199,10 +245,13 @@ const getWebviewContent = async (
                   }
               )
 
+            const getTitle = str =>
+              str.match(/.*<title>([^<]+)/)?.[1]
+
             const insertNavigationInterceptScript = str => {
               // hack that injects a script that tells parent window when a link was clicked or similar
               const [head, tail] = str.split("</head>")
-              return head + '<script' + '>window.addEventListener("unload", () => window.parent.postMessage({ type: "navigate", target: document.activeElement.getAttribute("href") }, "*"))</script' + '>' + "</head>" + tail
+              return head + '<script' + '>window.addEventListener("unload", () => window.parent.postMessage({ type: "navigate", target: document.activeElement.getAttribute("href") }, "*"))</script' + '>' + "</head>" + (tail || "")
             }
 
             try {
@@ -211,21 +260,33 @@ const getWebviewContent = async (
               if (route) {
                 try {
                   const { GET } = await import(route.filePath)
-                  const res = await GET(new Request(urlStr))
-                  if (res instanceof Response) {
-                    let output = await res.text()
-                    output = await replaceStaticLinksWithDataUrls(output)
-                    output = insertNavigationInterceptScript(output)
-                    iframe.srcdoc = output
+                  if (typeof GET === "function") {
+                    const res = await GET(new Request(urlStr))
+                    if (res instanceof Response) {
+                      let output = await res.text()
+                      vscode.postMessage({ type: "setPanelTitle", title: getTitle(output) || "Preview" })
+                      output = await replaceStaticLinksWithDataUrls(output)
+                      output = insertNavigationInterceptScript(output)
+                      iframe.srcdoc = output
+                    } else {
+                      iframe.srcdoc = '<h2>Failed to render page</h2><p>GET must return a Response object</p>'
+                    }
                   } else {
-                    iframe.srcdoc = '<p>GET must return a Response object</p>'
+                    iframe.srcdoc = '<p>' + route.filePath + ' must export a function named GET</p>'
                   }
                 } catch (e) {
                   console.error(e)
-                  iframe.srcdoc = '<p>Failed to render site: ' + e + '</p>'
+                  const eStr = e?.message || e?.name || e?.toString()
+                  iframe.srcdoc = '<h2>Failed to render page</h2><p>' + eStr + '</p>'
+                  const urlStr = e.stack?.split("\n")?.[1]?.trim().match(/\((.*)\)/)?.[1]
+                  const msg = URL.parse(urlStr)?.pathname
+                  iframe.srcdoc += '<p>' + (msg
+                      ? ('at ' + msg)
+                      : urlStr || (e.stack.endsWith(eStr) ? '' : (e.stack || ''))
+                    ) + '</p>'
                 }
               } else {
-                iframe.srcdoc = '<p>404 route not found</p>'
+                iframe.srcdoc = '<h1>404 page not found</h1>'
               }
             } catch (e) {
               iframe.srcdoc = '<p>' + e + '</p>'
@@ -248,14 +309,44 @@ const getWebviewContent = async (
             e.preventDefault()
             render(pathInput.value || "/")
           })
-          backBtn.addEventListener("click", e => {
+          backBtn.addEventListener("click", () => {
             history.pop()
             render(history.pop())
             vscode.postMessage({
               type: "popHistoryTwice",
             })
           })
+
+          document.getElementById("generateBtn").addEventListener("click", async () => {
+            try {
+              vscode.postMessage({ type: "clearOutputChannel" })
+              const { generatePagesForRoute, getStaticFilePaths } = await import("mastro/generate.js")
+
+              const files = (await getStaticFilePaths()).map(outFilePath => ({ outFilePath }))
+              for (const { filePath } of routes) {
+                try {
+                  // we have to do the import here and cannot factor it out to mastro/generate
+                  const module = await import(filePath)
+                  try {
+                    const pages = await generatePagesForRoute(filePath, module)
+                    files.push(...pages.filter(p => p))
+                  } catch (e) {
+                    const error = "Failed to generate route " + filePath + ": " + e
+                    vscode.postMessage({ type: "showErrorInOutputChannel", error });
+                  }
+                } catch (e) {
+                  const error = "Failed to import route " + filePath + ": " + e;
+                  vscode.postMessage({ type: "showErrorInOutputChannel", error });
+                }
+              }
+              vscode.postMessage({ type: "generateFiles", files })
+            } catch (e) {
+              console.error(e)
+              vscode.postMessage({ type: "showErrorInOutputChannel", error: e.message || e.toString() })
+            }
+          })
         } catch (e) {
+          console.error(e)
           vscode.postMessage({ type: "showError", error: e.toString() })
         }
         </script>
@@ -270,6 +361,16 @@ const getWebviewContent = async (
           }
           form {
             margin: 0 1em;
+            display: flex;
+            gap: 0.75em;
+            margin: 0.75em 1em;
+          }
+          #pathInput {
+            flex-grow: 1;
+            width: 3em;
+          }
+          #generateBtn {
+            margin-left: auto;
           }
           input {
             background-color: transparent;
@@ -291,6 +392,7 @@ const getWebviewContent = async (
         <form>
           <button id="backBtn" type="button" disabled>←</button>
           <input id="pathInput">
+          <button id="generateBtn" type="button">Generate</button>
         </form>
         <iframe sandbox="allow-modals allow-scripts">
       </body>
@@ -311,7 +413,7 @@ const getImportMap = async (
     }
   }
 
-  ["fs.js", "generate.js", "html.js", "markdown.js", "router.js", "routes.js", "server.js"]
+  ["fs.js", "generate.js", "html.js", "markdown.js", "router.js", "routes.js"]
     .forEach((fileName) => {
       const uri = vscode.Uri.joinPath(context.extensionUri, "mastro", fileName);
       imports["mastro/" + fileName] = webview.asWebviewUri(uri).toString();
@@ -322,10 +424,13 @@ const getImportMap = async (
 const getStaticFiles = async (webview: vscode.Webview, basePathLen: number) => {
   const files = {} as Record<string, string>;
   for (const uri of await vscode.workspace.findFiles("routes/**/*.*")) {
-    if (!uri.path.endsWith(".server.js")) {
+    if (isStaticFile(uri.path)) {
       files[uri.path.slice(7 + basePathLen)] = webview.asWebviewUri(uri)
         .toString();
     }
   }
   return JSON.stringify(files);
 };
+
+const isStaticFile = (p: string) =>
+  !p.endsWith(".server.ts") && !p.endsWith(".server.js") && !p.endsWith("/.DS_Store");

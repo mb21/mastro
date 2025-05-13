@@ -1,7 +1,7 @@
 {
   "tasks": {
     "start": "deno eval --unstable-sloppy-imports \"import { handler } from 'mastro/server.ts'\nDeno.serve(handler)\"",
-    "generate": "deno eval --unstable-sloppy-imports \"import { generateFiles } from 'mastro/generate.ts'; generateFiles()\""
+    "generate": "deno eval --unstable-sloppy-imports \"import { generate } from 'mastro/generate.ts'; generate()\""
   },
   "patch": ["../../"],
   "imports": {

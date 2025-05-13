@@ -1,4 +1,4 @@
-# Mastro SSG VS Code Extension
+# Mastro VS Code Extension
 
 This is a VS Code [Web Extension](https://code.visualstudio.com/api/extension-guides/web-extensions) to build your static site inside your browser using vscode.dev or github.dev.
 
@@ -28,7 +28,7 @@ The extension calls `vscode.window.createWebviewPanel` and sets its html to the 
 const { GET } = await import(route.filePath)
 ```
 
-The Webview has some theming CSS set by VSCode. In the HTML, we render a sort of browser-like address bar, a back button and a giant iframe.
+The Webview has some theming CSS set by VS Code. In the HTML, we render a sort of browser-like address bar, a back button and a giant iframe.
 
 #### iframe (browser)
 

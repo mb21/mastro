@@ -62,16 +62,16 @@ export const activate = async (context: vscode.ExtensionContext) => {
               const encoder = new TextEncoder();
               // TODO: clear docs folder
               wsedit.createFile(
-                vscode.Uri.joinPath(rootFolder, "docs/.nojekyll"),
+                rootFolder.with({ path: basePath + "/docs/.nojekyll" }),
                 { ignoreIfExists: true },
               );
               await Promise.all(files.map(async (file: any) => {
                 const { outFilePath, output } = file;
-                const fileUri = rootFolder.with({ path: "/docs" + outFilePath })
+                const fileUri = rootFolder.with({ path: basePath + "/docs" + outFilePath })
                 const contents = output
                   ? encoder.encode(output)
                   : await vscode.workspace.fs.readFile(
-                      rootFolder.with({ path: "/routes" + outFilePath }),
+                      rootFolder.with({ path: basePath + "/routes" + outFilePath }),
                     );
                 wsedit.createFile(fileUri, { overwrite: true, contents });
               }));

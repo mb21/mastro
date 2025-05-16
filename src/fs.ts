@@ -10,22 +10,20 @@ const vscodeExtensionFs = typeof window === "object"
 /**
  * Reads the directory and lists its files non-recursively and ignoring symlinks.
  */
-export const readDir = async (path: string): Promise<string[]> => {
-  path = ensureLeadingSlash(path);
-  return fs
-    ? (await fs.readdir("." + path, { withFileTypes: true }))
-      .flatMap((file) =>
-        file.isSymbolicLink() || file.isDirectory() ? [] : file.name
+export const readDir = async (path: string): Promise<string[]> =>
+  fs
+    ? fs.readdir(ensureNoLeadingSlash(path), { withFileTypes: true })
+      .then((files) =>
+        files.flatMap((file) =>
+          file.isSymbolicLink() || file.isDirectory() ? [] : file.name
+        )
       )
-    : vscodeExtensionFs.readDir(path);
-};
+    : vscodeExtensionFs.readDir(ensureLeadingSlash(path));
 
-export const readTextFile = (path: string): Promise<string> => {
-  path = ensureLeadingSlash(path);
-  return fs
-    ? fs.readFile("." + path, { encoding: "utf8" })
-    : vscodeExtensionFs.readTextFile(path);
-};
+export const readTextFile = (path: string): Promise<string> =>
+  fs
+    ? fs.readFile(ensureNoLeadingSlash(path), { encoding: "utf8" })
+    : vscodeExtensionFs.readTextFile(ensureLeadingSlash(path));
 
 /**
  * Expands glob patterns like `*` and `**` and returns the matching file paths.
@@ -52,4 +50,7 @@ export const findFiles = async (pattern: string): Promise<string[]> => {
   }
 };
 
-const ensureLeadingSlash = (path: string) => path.startsWith("/") ? path : "/" + path;
+const ensureLeadingSlash = (path: string) =>
+  path.startsWith("/") ? path : "/" + path;
+const ensureNoLeadingSlash = (path: string) =>
+  path.startsWith("/") ? path.slice(1) : path;

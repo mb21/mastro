@@ -25,12 +25,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
       const { webview } = panel;
 
       const history: string[] = [];
-      webview.html = await getWebviewContent(
-        webview,
-        context,
-        basePathLen,
-        history,
-      );
+      webview.html = await getWebviewContent(webview, context, basePathLen, history);
       webview.onDidReceiveMessage(async (msg) => {
         switch (msg.type) {
           case "pushHistory": {
@@ -132,20 +127,17 @@ export const activate = async (context: vscode.ExtensionContext) => {
 
       const disposables: vscode.Disposable[] = [];
 
-      vscode.workspace.onDidSaveTextDocument(
-        async (e) => {
-          const html = await getWebviewContent(
-            webview,
-            context,
-            basePathLen,
-            history,
-          );
-          webview.html = "";
-          webview.html = html;
-        },
-        this,
-        disposables,
-      );
+      // TODO: perhaps we wouldn't need to redraw the whole webview every time...
+      const redrawWebview = () =>
+        getWebviewContent(webview, context, basePathLen, history)
+          .then(html => {
+            webview.html = "";
+            webview.html = html;
+          })
+      vscode.workspace.onDidCreateFiles(redrawWebview, this, disposables)
+      vscode.workspace.onDidDeleteFiles(redrawWebview, this, disposables)
+      vscode.workspace.onDidRenameFiles(redrawWebview, this, disposables)
+      vscode.workspace.onDidSaveTextDocument(redrawWebview, this, disposables)
 
       panel.onDidDispose(() => disposables.forEach((d) => d.dispose()));
     }),
@@ -196,11 +188,54 @@ const getWebviewContent = async (
             findFiles: pattern => postMessageAndAwaitAnswer({ type: "findFiles", pattern }),
             readDir: pathOfDir => postMessageAndAwaitAnswer({ type: "readDir", path: pathOfDir }),
             readTextFile: path => postMessageAndAwaitAnswer({ type: "readTextFile", path }),
-            staticFiles: ${await getStaticFiles(webview, basePathLen)},
           }
 
           // after we've populated window.fs, we can import things that use it
           const { routes, matchRoute } = await import("mastro/router.js")
+
+          const replaceAsync = async (str, regex, asyncFn) => {
+            const promises = []
+            str.replace(regex, (match, ...args) => {
+                promises.push(asyncFn(match, ...args))
+                return match
+            })
+            const data = await Promise.all(promises)
+            return str.replace(regex, () => data.shift())
+          }
+
+          const toDataUrl = url =>
+            new Promise(async resolve => {
+              const reader = new FileReader()
+              reader.onload = () => resolve(reader.result)
+              reader.readAsDataURL(await fetch(url).then(r => r.blob()))
+            })
+
+          const staticFiles = ${await getStaticFiles(webview, basePathLen)};
+          const replaceStaticLinksWithDataUrls = (path, str) =>
+            replaceAsync(str, /(<.*?[src|href]=")([^"]+)(".*>)/gi, async (match, p1, p2, p3) => {
+                const assetPath = URL.parse(p2, "http://localhost" + path)?.pathname
+                const webViewUrl = staticFiles[assetPath]
+                return webViewUrl
+                  ? p1 + await toDataUrl(webViewUrl) + p3
+                  : match
+                }
+            )
+
+          const getTitle = str =>
+            str.match(/.*<title>([^<]+)/)?.[1]
+
+          const insertNavigationInterceptScript = str => {
+            // hack that injects a script that tells parent window when a link was clicked or similar
+            const [head, tail] = str.split("</head>")
+            return head + '<script' + '>window.addEventListener("unload", () => window.parent.postMessage({ type: "navigate", target: document.activeElement.getAttribute("href") }, "*"))</script' + '>' + "</head>" + (tail || "")
+          }
+
+          const getStaticFile = async (origPath, segment) => {
+            const path = (origPath === "/" ? "" : origPath) + segment + ".html"
+            return staticFiles[path]
+              ? postMessageAndAwaitAnswer({ type: "readTextFile", path: "/routes" + path })
+              : undefined
+          }
 
           const backBtn = document.getElementById("backBtn")
           const pathInput = document.getElementById("pathInput")
@@ -218,43 +253,14 @@ const getWebviewContent = async (
             backBtn.disabled = history.length < 1
             history.push(path)
 
-            const replaceAsync = async (str, regex, asyncFn) => {
-              const promises = []
-              str.replace(regex, (match, ...args) => {
-                  promises.push(asyncFn(match, ...args))
-                  return match
-              })
-              const data = await Promise.all(promises)
-              return str.replace(regex, () => data.shift())
-            }
-
-            const toDataUrl = url =>
-              new Promise(async resolve => {
-                const reader = new FileReader()
-                reader.onload = () => resolve(reader.result)
-                reader.readAsDataURL(await fetch(url).then(r => r.blob()))
-              })
-
-            const replaceStaticLinksWithDataUrls = str =>
-              replaceAsync(str, /(<.*?[src|href]=")([^"]+)(".*>)/gi, async (match, p1, p2, p3) => {
-                  const assetPath = URL.parse(p2, "http://localhost" + path)?.pathname
-                  const webViewUrl = window.fs.staticFiles[assetPath]
-                  return webViewUrl
-                    ? p1 + await toDataUrl(webViewUrl) + p3
-                    : match
-                  }
-              )
-
-            const getTitle = str =>
-              str.match(/.*<title>([^<]+)/)?.[1]
-
-            const insertNavigationInterceptScript = str => {
-              // hack that injects a script that tells parent window when a link was clicked or similar
-              const [head, tail] = str.split("</head>")
-              return head + '<script' + '>window.addEventListener("unload", () => window.parent.postMessage({ type: "navigate", target: document.activeElement.getAttribute("href") }, "*"))</script' + '>' + "</head>" + (tail || "")
-            }
-
             try {
+              const staticHtml = await getStaticFile(path, "") || await getStaticFile(path, "/index")
+              if (staticHtml) {
+                iframe.srcdoc = staticHtml
+                return
+              }
+
+              // try route
               const urlStr = "http://localhost" + path
               const route = matchRoute(urlStr)
               if (route) {
@@ -265,7 +271,7 @@ const getWebviewContent = async (
                     if (res instanceof Response) {
                       let output = await res.text()
                       vscode.postMessage({ type: "setPanelTitle", title: getTitle(output) || "Preview" })
-                      output = await replaceStaticLinksWithDataUrls(output)
+                      output = await replaceStaticLinksWithDataUrls(path, output)
                       output = insertNavigationInterceptScript(output)
                       iframe.srcdoc = output
                     } else {

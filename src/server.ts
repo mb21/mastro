@@ -23,19 +23,24 @@ export const handler = async (req: Request) => {
       const str = await loadDependency(specifier)
       return jsResponse(str)
     } else {
-      const route = matchRoute(req.url)
-      if (route) {
-        const modulePath = Deno.cwd() + route.filePath
-        console.info(`Received ${req.url}, loading ${modulePath}`)
-        const { GET } = await import(modulePath)
-        const res = await GET(req)
-        if (res instanceof Response) {
-          return res
-        } else {
-          throw Error('GET must return a Response object')
-        }
+      const fileRes = await getStaticFile(req, pathname) || await getStaticFile(req, pathname + ".html")
+      if (fileRes) {
+        return fileRes
       } else {
-        return serveFile(req, 'routes' + pathname)
+        const route = matchRoute(req.url)
+        if (route) {
+          const modulePath = Deno.cwd() + route.filePath
+          console.info(`Received ${req.url}, loading ${modulePath}`)
+          const { GET } = await import(modulePath)
+          const res = await GET(req)
+          if (res instanceof Response) {
+            return res
+          } else {
+            throw Error('GET must return a Response object')
+          }
+        } else {
+          return new Response('404 not found', { status: 404 })
+        }
       }
     }
   } catch (e: any) {
@@ -48,6 +53,11 @@ export const handler = async (req: Request) => {
       return new Response(`500: ${e.name || 'Unknown error'}\n\n${e}`, { status: 500 })
     }
   }
+}
+
+const getStaticFile = async (req: Request, path: string) => {
+  const res = await serveFile(req, 'routes' + path)
+  return res.ok ? res : undefined
 }
 
 const loadDependency = async (specifier: string) => {

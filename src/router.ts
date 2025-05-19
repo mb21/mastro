@@ -1,16 +1,18 @@
 import { findFiles } from './fs.ts'
 
 if (typeof URLPattern !== "function") {
+  // implemented in Chrome, Deno and Node >=23.8.0
+  // to be implemented by all browsers soon:
+  // see https://wpt.fyi/results/urlpattern?q=label%3Ainterop-2025-urlpattern
+  // should we add https://www.npmjs.com/package/urlpattern-polyfill in the mean-time?
   throw Error("Please use a browser that implements URLPattern")
 }
 
 const pathSegments = []
 for (const filePath of await findFiles('routes/**/*.server.{ts,js}')) {
   const segments = filePath.split('/').slice(2).map(segment => {
-    const matches = segment.match(/^\[([a-zA-Z0-9]+)\]\.server\.(ts|js)$/)
-    if (matches?.[1]) {
-      // `[slug].ts` -> `:slug`
-      const param = matches[1]
+    const param = segment.match(/^\[([a-zA-Z0-9]+)\]/)?.[1]
+    if (param) {
       return ':' + param
     } else if (segment === 'index.server.ts' || segment === 'index.server.js') {
       return

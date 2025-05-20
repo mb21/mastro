@@ -28,6 +28,10 @@ export const activate = async (context: vscode.ExtensionContext) => {
       webview.html = await getWebviewContent(webview, context, basePathLen, history);
       webview.onDidReceiveMessage(async (msg) => {
         switch (msg.type) {
+          case "openExternal": {
+            vscode.env.openExternal(vscode.Uri.parse(msg.target))
+            return;
+          }
           case "pushHistory": {
             history.push(msg.path);
             return;
@@ -227,7 +231,13 @@ const getWebviewContent = async (
           const insertNavigationInterceptScript = str => {
             // hack that injects a script that tells parent window when a link was clicked or similar
             const [head, tail] = str.split("</head>")
-            return head + '<script' + '>window.addEventListener("unload", () => window.parent.postMessage({ type: "navigate", target: document.activeElement.getAttribute("href") }, "*"))</script' + '>' + "</head>" + (tail || "")
+            return head + '<script' + '>window.addEventListener("beforeunload", e => {e.preventDefault(); window.parent.postMessage({ type: "navigate", target: document.activeElement.getAttribute("href") }, "*");})</script' + '>' + "</head>" + (tail || "")
+          }
+
+          const transformOutput = async (path, output) => {
+            vscode.postMessage({ type: "setPanelTitle", title: getTitle(output) || "Preview" })
+            const out = await replaceStaticLinksWithDataUrls(path, output)
+            return insertNavigationInterceptScript(out)
           }
 
           const getStaticFile = async (origPath, segment) => {
@@ -256,11 +266,10 @@ const getWebviewContent = async (
             try {
               const staticHtml = await getStaticFile(path, "") || await getStaticFile(path, "/index")
               if (staticHtml) {
-                iframe.srcdoc = staticHtml
+                iframe.srcdoc = await transformOutput(path, staticHtml)
                 return
               }
 
-              // try route
               const urlStr = "http://localhost" + path
               const route = matchRoute(urlStr)
               if (route) {
@@ -269,11 +278,8 @@ const getWebviewContent = async (
                   if (typeof GET === "function") {
                     const res = await GET(new Request(urlStr))
                     if (res instanceof Response) {
-                      let output = await res.text()
-                      vscode.postMessage({ type: "setPanelTitle", title: getTitle(output) || "Preview" })
-                      output = await replaceStaticLinksWithDataUrls(path, output)
-                      output = insertNavigationInterceptScript(output)
-                      iframe.srcdoc = output
+                      const output = await res.text()
+                      iframe.srcdoc = await transformOutput(path, output)
                     } else {
                       iframe.srcdoc = '<h2>Failed to render page</h2><p>GET must return a Response object</p>'
                     }
@@ -302,9 +308,15 @@ const getWebviewContent = async (
           window.addEventListener("message", event => {
             const { data } = event
             if (data.type === "navigate" && data.target) {
-              const path = URL.parse(data.target, "http://localhost" + pathInput.value)?.pathname
-              if (path) {
-                render(path)
+              const { target } = data
+              const oldPath = history.at(-1) || "/"
+              if (target.startsWith("https://") || target.startsWith("http://")) {
+                vscode.postMessage({ type: "openExternal", target })
+                // overwrite iframe contents because we cannot prevent it from navigating away:
+                render(oldPath)
+              } else {
+                const newPath = URL.parse(target, "http://localhost" + pathInput.value)?.pathname
+                render(newPath || oldPath)
               }
             }
           })

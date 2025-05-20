@@ -45,4 +45,6 @@ const output = await GET(req)
 iframe.srcdoc = output
 ```
 
-Only API we can call here is `window.fs` (which we set up in the WebViewPanel).
+APIs we can call here are those we set up in the WebViewPanel:
+- `window.fs`
+- `window.parent.postMessage`

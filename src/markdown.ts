@@ -2,7 +2,7 @@ import jsYaml from "https://esm.sh/js-yaml@4.1.0";
 import { micromark, type Options } from "https://esm.sh/micromark@4.0.2";
 import { gfm, gfmHtml } from "https://esm.sh/micromark-extension-gfm@3.0.0";
 
-import { readTextFile } from "./fs.ts";
+import { findFiles, readTextFile } from "./fs.ts";
 import { unsafeInnerHtml } from "./html.ts";
 
 // from https://github.com/dworthen/js-yaml-front-matter/blob/master/src/index.js#L14
@@ -22,6 +22,12 @@ export const markdownToHtml = (md: string, opts?: Options) => {
 
 export const readMarkdownFile = async (path: string, opts?: Options) =>
   markdownToHtml(await readTextFile(path), opts);
+
+export const readMarkdownFiles = async (pattern: string, opts?: Options) => {
+  const paths = await findFiles(pattern);
+  const files = await Promise.all( paths.map(readTextFile) );
+  return files.map((file, i) => ({ path: paths[i], ...markdownToHtml(file, opts)}));
+}
 
 const parseYamlFrontmatter = (md: string) => {
   let meta = {}

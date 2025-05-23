@@ -1,19 +1,18 @@
 {
-  "name": "mastro-ssg-vscode-extension",
-  "displayName": "Mastro SSG (static site generation)",
+  "name": "mastro-vscode-extension",
+  "displayName": "Mastro",
   "description": "Build static websites in your browser using vscode.dev or github.dev",
-  "icon": "",
+  "icon": "icon.png",
   "version": "0.0.1",
+  "publisher": "mastro",
   "repository": {
-    "url": "https://github.com/mb21/mastro.git",
+    "url": "https://github.com/mastrojs/mastro.git",
     "type": "git"
   },
   "engines": {
     "vscode": "^1.96.0"
   },
-  "categories": [
-    "Other"
-  ],
+  "categories": ["Other", "Education"],
   "browser": "./out/extension.js",
   "contributes": {
     "commands": [
@@ -27,7 +26,7 @@
   "scripts": {
     "open-in-browser": "npm run build; vscode-test-web --extensionDevelopmentPath=. ../examples/hello-world/",
     "vscode:prepublish": "npm run build",
-    "build": "tsc -p ./ && tsc ../src/*.ts --outDir mastro --target esnext --rewriteRelativeImportExtensions",
+    "build": "tsc -p ./ && tsc ../src/*.ts --outDir mastro --target esnext --rewriteRelativeImportExtensions || true",
     "watch": "tsc -watch -p ./"
   },
   "devDependencies": {

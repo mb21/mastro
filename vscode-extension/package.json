@@ -3,7 +3,7 @@
   "displayName": "Mastro",
   "description": "Build static websites in your browser using vscode.dev or github.dev",
   "icon": "icon.png",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "mastro",
   "repository": {
     "url": "https://github.com/mastrojs/mastro.git",
@@ -12,7 +12,10 @@
   "engines": {
     "vscode": "^1.96.0"
   },
-  "categories": ["Other", "Education"],
+  "categories": [
+    "Other",
+    "Education"
+  ],
   "browser": "./out/extension.js",
   "contributes": {
     "commands": [

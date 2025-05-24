@@ -9,7 +9,8 @@ if (typeof URLPattern !== "function") {
 }
 
 const pathSegments = []
-for (const filePath of await findFiles('routes/**/*.server.{ts,js}')) {
+const suffix = typeof window === "object" ? "js" : "{ts,js}"
+for (const filePath of await findFiles(`routes/**/*.server.${suffix}`)) {
   const segments = filePath.split('/').slice(2).map(segment => {
     const param = segment.match(/^\[([a-zA-Z0-9]+)\]/)?.[1]
     if (param) {

@@ -25,7 +25,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
       const { webview } = panel;
 
       const history: string[] = [];
-      webview.html = await getWebviewContent(webview, context, basePathLen, history);
+      webview.html = await getWebviewContent(webview, context, rootFolder, basePath, history);
       webview.onDidReceiveMessage(async (msg) => {
         switch (msg.type) {
           case "openExternal": {
@@ -44,7 +44,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
           case "findFiles": {
             const { pattern, requestId } = msg;
             const response = [];
-            for (const uri of await vscode.workspace.findFiles(pattern)) {
+            for (const uri of await findFiles(rootFolder, basePath, pattern)) {
               response.push(uri.path.slice(basePathLen));
             }
             webview.postMessage({ type: "success", response, requestId });
@@ -133,7 +133,7 @@ export const activate = async (context: vscode.ExtensionContext) => {
 
       // TODO: perhaps we wouldn't need to redraw the whole webview every time...
       const redrawWebview = () =>
-        getWebviewContent(webview, context, basePathLen, history)
+        getWebviewContent(webview, context, rootFolder, basePath, history)
           .then(html => {
             webview.html = "";
             webview.html = html;
@@ -151,7 +151,8 @@ export const activate = async (context: vscode.ExtensionContext) => {
 const getWebviewContent = async (
   webview: vscode.Webview,
   context: vscode.ExtensionContext,
-  basePathLen: number,
+  rootFolder: vscode.Uri,
+  basePath: string,
   history: string[],
 ) => {
   return String.raw`<!DOCTYPE html>
@@ -162,7 +163,7 @@ const getWebviewContent = async (
         <title>WebviewPanel</title>
 
         <script type="importmap">
-          ${await getImportMap(webview, context, basePathLen)}
+          ${await getImportMap(webview, context, rootFolder, basePath)}
         </script>
 
         <!--
@@ -214,7 +215,7 @@ const getWebviewContent = async (
               reader.readAsDataURL(await fetch(url).then(r => r.blob()))
             })
 
-          const staticFiles = ${await getStaticFiles(webview, basePathLen)};
+          const staticFiles = ${await getStaticFiles(webview, rootFolder, basePath)};
           const replaceStaticLinksWithDataUrls = (path, str) =>
             replaceAsync(str, /(<.*?[src|href]=")([^"]+)(".*>)/gi, async (match, p1, p2, p3) => {
                 const assetPath = URL.parse(p2, "http://localhost" + path)?.pathname
@@ -421,12 +422,13 @@ const getWebviewContent = async (
 const getImportMap = async (
   webview: vscode.Webview,
   context: vscode.ExtensionContext,
-  basePathLen: number,
+  rootFolder: vscode.Uri,
+  basePath: string,
 ) => {
   const imports = {} as Record<string, string>;
-  for (const uri of await vscode.workspace.findFiles("**/*.*")) {
+  for (const uri of await findFiles(rootFolder, basePath, "**/*")) {
     if (uri.path.endsWith(".js")) {
-      imports[uri.path.slice(basePathLen)] = webview.asWebviewUri(uri)
+      imports[uri.path.slice(basePath.length)] = webview.asWebviewUri(uri)
         .toString();
     }
   }
@@ -439,16 +441,71 @@ const getImportMap = async (
   return JSON.stringify({ imports });
 };
 
-const getStaticFiles = async (webview: vscode.Webview, basePathLen: number) => {
+const getStaticFiles = async (webview: vscode.Webview, rootFolder: vscode.Uri, basePath: string) => {
   const files = {} as Record<string, string>;
-  for (const uri of await vscode.workspace.findFiles("routes/**/*.*")) {
+  for (const uri of await findFiles(rootFolder, basePath, "routes/**/*")) {
     if (isStaticFile(uri.path)) {
-      files[uri.path.slice(7 + basePathLen)] = webview.asWebviewUri(uri)
+      files[uri.path.slice(7 + basePath.length)] = webview.asWebviewUri(uri)
         .toString();
     }
   }
   return JSON.stringify(files);
 };
+
+const findFiles = async (
+  rootFolder: vscode.Uri,
+  basePath: string,
+  pattern: string,
+): Promise<vscode.Uri[]> => {
+  // once https://github.com/microsoft/vscode/issues/249197 is fixed, this whole
+  // function can be replaced with `vscode.workspace.findFiles(pattern)`
+
+  // for now, this poor replacement implementation only works on patterns of the form:
+  // `**/*`
+  // `routes/**/*`
+  // `routes/**/*.server.js`
+  // `data/posts/*.md`
+
+  const readDir = (path: string) =>
+    vscode.workspace.fs.readDirectory(
+      rootFolder.with({ path: basePath + path })
+    ).then(entries =>
+      entries.map(([name, type]) => [path + "/" + name, type] as const)
+    )
+
+  pattern = pattern.startsWith("/") ? pattern : "/" + pattern
+  const segments = pattern.split("/")
+  const fileNamePattern = segments.pop()
+  if (!fileNamePattern) return []
+
+  const traverse = async (dirPath: string): Promise<string[]> => {
+    const paths = []
+    for (const [name, type] of await readDir(dirPath)) {
+      if (type === vscode.FileType.File) {
+        paths.push(name)
+      } else if (type === vscode.FileType.Directory) {
+        paths.push(...await traverse(name))
+      }
+    }
+    return paths
+  }
+
+  const files = segments.at(-1) === "**"
+    ? await traverse(segments.slice(0, -1).join("/"))
+    : await readDir(segments.join("/")).then(entries => entries.map(([name]) => name))
+
+  const makePredicate = () => {
+    if (fileNamePattern[0] === "*") {
+     const suffix = fileNamePattern.slice(1)
+     return (fileName: string) => fileName.endsWith(suffix)
+    } else {
+      return (fileName: string) => fileName === fileNamePattern
+    }
+  }
+  return files
+    .filter(makePredicate())
+    .map(name => rootFolder.with({ path: basePath + name }))
+}
 
 const isStaticFile = (p: string) =>
   !p.endsWith(".server.ts") && !p.endsWith(".server.js") && !p.endsWith("/.DS_Store");

@@ -23,10 +23,10 @@ await build({
     license: "MIT",
     repository: {
       type: "git",
-      url: "git+https://github.com/mb21/mastro.git",
+      url: "git+https://github.com/mastrojs/mastro.git",
     },
     bugs: {
-      url: "https://github.com/mb21/mastro/issues",
+      url: "https://github.com/mastrojs/mastro/issues",
     },
     dependencies: {
       "@maverick-js/signals": "^6.0.0",

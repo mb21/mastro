@@ -2,7 +2,7 @@
 
 A tiny ([2.7kB minzipped](https://bundlephobia.com/package/mastro)) reactive GUI library for your existing MPA. Reactive Mastro sits somewhere in between React/Vue/Solid/Svelte one one end, and Alpine/HTMX/Stimulus on the other end – while being smaller and simpler than all of them.
 
-Reactive Mastro was conceived as the client-side part of [Mastro](https://github.com/mb21/mastro/), but you can just as well use it with any other static site or server that renders HTML (such as Rails, Django, PHP, etc).
+Reactive Mastro was conceived as the client-side part of [Mastro](https://github.com/mastrojs/mastro/), but you can just as well use it with any other static site or server that renders HTML (such as Rails, Django, PHP, etc).
 
 Server-side part is plain HTML:
 
@@ -162,7 +162,7 @@ Using custom elements means the browser handles most of the work for us, such as
 You register your custom element once with `window.customElements.define('my-counter', class extends ReactiveElement { })` (the name must start with a lowercase letter and contain a hyphen), and then you can use it wherever in your HTML body, e.g. `<my-counter></my-counter>`. No JavaScript imports nor manually calling a constructor needed.
 
 Your class extends Reactive Mastro's `ReactiveElement` class, which in turn extends the browser's `HTMLElement` class. Thus you're almost using plain
-custom elements, and have access to all native callbacks and methods (such as [attaching shadow DOM](https://github.com/mb21/mastro/issues/2)), should you choose to use them. However, what `ReactiveElement` does for you on `connectedCallback`, is two things:
+custom elements, and have access to all native callbacks and methods (such as [attaching shadow DOM](https://github.com/mastrojs/mastro/issues/2)), should you choose to use them. However, what `ReactiveElement` does for you on `connectedCallback`, is two things:
 
 - attach event listeners to handle your `data-on*` attributes (e.g. `data-onclick`), and
 - bind signals to the DOM elements you put `data-bind` on.

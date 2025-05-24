@@ -1,8 +1,11 @@
 # Mastro
 
-A *m*inimal take on an [*Astro*](https://astro.build)-like MPA web framework.
+A *m*inimal take on an *Astro*-like MPA web framework. Currently, there are three parts to it:
 
-🚧 While the Mastro server framework is still a work in progress, the client-side part is already very usable: see [**Reactive Mastro**](src/reactive/).
+- [The Mastro Guide](https://mastrojs.github.io/) and accompanying [_Visual Studio Code for the Web_ extension](https://marketplace.visualstudio.com/items?itemName=mastro.mastro-vscode-extension) that teach you how to build and publish your first webside – using only a browser and a GitHub account.
+- The Mastro web framework (server and static site generator) – work-in-progress, currently focusing on getting it running in Deno.
+- [Reactive Mastro](src/reactive/) – a tiny reactive GUI library for your existing MPA.
+
 
 ## Philosophy
 
